@@ -18,3 +18,9 @@ pip install -r requirements.txt
 ```sh
 $ ./main.py
 ```
+
+## **Format**
+
+```sh
+$ autopep8 --in-place --aggressive *.py --max-line-length 120
+```

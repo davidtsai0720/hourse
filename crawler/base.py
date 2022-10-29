@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
+from collections import namedtuple
 import abc
+import json
+import os
 
 from selenium import webdriver
+
+Node = namedtuple('Node', ('tag', 'class_name'))
 
 
 class URL:
@@ -29,5 +34,22 @@ class House(abc.ABC):
         self.driver = driver
 
     @abc.abstractmethod
-    def run(self) -> None:
+    def run(self, param: any) -> None:
         pass
+
+    @property
+    def wdir(self) -> str:
+        try:
+            return self._wdir
+        except AttributeError:
+            wd = os.getcwd()
+            wdir = os.path.join(wd, 'output')
+            if not os.path.exists(wdir):
+                os.mkdir(wdir)
+            self._wdir = wdir
+            return self._wdir
+
+    def save(self, dest: str, data: list) -> None:
+        path = os.path.join(self.wdir, dest)
+        with open(path, 'w') as f:
+            f.write(json.dumps(data))
