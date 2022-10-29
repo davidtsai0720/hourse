@@ -38,14 +38,12 @@ def exec_crawler() -> None:
     driver = webdriver.Firefox(service=service, options=options)
     try:
         obj = sale591.Sale591(driver=driver)
-        for data in sale591.Query:
-            for param in data.value:
-                obj.run(param)
+        for param in sale591.Query:
+            obj.run(param.value)
 
         obj = yungching.YungChing(driver=driver)
-        for data in yungching.Query:
-            for param in data.value:
-                obj.run(param)
+        for param in yungching.Query:
+            obj.run(param.value)
 
     except Exception as e:
         logging.error(e)

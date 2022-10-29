@@ -53,3 +53,10 @@ class House(abc.ABC):
         path = os.path.join(self.wdir, dest)
         with open(path, 'w') as f:
             f.write(json.dumps(data))
+
+    def value(self, text: str) -> int:
+        count = ''
+        for char in text:
+            if char.isdigit():
+                count += char
+        return int(count)

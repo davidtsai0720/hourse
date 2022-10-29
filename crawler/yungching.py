@@ -60,13 +60,6 @@ class Item(Enum):
 
 class YungChing(House):
 
-    def value(self, text: str) -> int:
-        count = ''
-        for char in text:
-            if char.isdigit():
-                count += char
-        return int(count)
-
     def fetch_one(self, soup: BeautifulSoup) -> Iterator[dict]:
         for element in soup.find_all(Item.Item.value.tag, class_=Item.Item.value.class_name):
             title = element.find(Item.Title.value.tag, class_=Item.Title.value.class_name)
@@ -111,12 +104,18 @@ class YungChing(House):
 
 class Query(Enum):
 
-    Taipei = [
-        {
-            'city': '台北市',
-            'min_price': 1000,
-            'max_price': 2600,
-            'area': 18,
-            'dest': 'yungchingTaipei.json'
-        },
-    ]
+    Taipei = {
+        'city': '台北市',
+        'min_price': 1000,
+        'max_price': 2600,
+        'area': 18,
+        'dest': 'yungchingTaipei.json'
+    },
+
+    NewTaipei = {
+        'city': '新北市',
+        'min_price': 800,
+        'max_price': 2000,
+        'area': 25,
+        'dest': 'yungchingNewTaipei.json'
+    }

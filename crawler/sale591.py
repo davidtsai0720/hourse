@@ -113,18 +113,15 @@ class Sale591(House):
             try:
                 WebDriverWait(self.driver, 10).until(method)
             except Exception as e:
-                logging.warning(e)
-                return
+                logging.error(e)
+                continue
+
             soup = BeautifulSoup(self.driver.page_source, 'html.parser')
             results.extend(self.fetch_one(soup=soup))
 
             if param.can_update_total:
-                content = soup.find(Item.TotalRows.value.tag, class_=Item.TotalRows.value.class_name)
-                count = ''
-                for char in content.text:
-                    if char.isdigit():
-                        count += char
-                param.set_totalRows(int(count))
+                node = soup.find(Item.TotalRows.value.tag, class_=Item.TotalRows.value.class_name)
+                param.set_totalRows(self.value(node.text))
 
             param.set_firstRow(param.firstRow + Item.PageSize.value)
             time.sleep(random.uniform(5, 9))
@@ -133,34 +130,20 @@ class Sale591(House):
 
 class Query(Enum):
 
-    Taipei = [
-        {
-            'regionid': 1,
-            'kind': 9,
-            'price': '1000$_2600$',
-            'area': '18$_$',
-            'houseage': '25$_45$',
-            'dest': '591Taipei.json'
-        },
-    ]
+    Taipei = {
+        'regionid': 1,
+        'kind': 9,
+        'price': '1000$_2600$',
+        'area': '18$_$',
+        'houseage': '25$_45$',
+        'dest': '591Taipei.json'
+    }
 
-    NewTaipei = [
-        {
-            'regionid': 3,
-            'kind': 9,
-            'price': '1000$_2000$',
-            'area': '25$_$',
-            'houseage': '$_30$',
-            'section': '38,37,26,34,44',
-            'dest': '591NewTaipei01.json',
-        },
-        {
-            'regionid': 3,
-            'kind': 9,
-            'price': '1000$_2000$',
-            'area': '25$_$',
-            'houseage': '$_30$',
-            'section': '46,27,43',
-            'dest': '591NewTaipei02.json',
-        },
-    ]
+    NewTaipei = {
+        'regionid': 3,
+        'kind': 9,
+        'price': '800$_2000$',
+        'area': '25$_$',
+        'houseage': '$_30$',
+        'dest': '591NewTaipei.json',
+    }
