@@ -17,8 +17,8 @@ class Param:
 
     def __init__(self, param: dict) -> None:
         self.city: str = param['city']
-        self.min_price: str = param['min_price']
-        self.max_price: str = param['max_price']
+        self.min_price: int = param['min_price']
+        self.max_price: int = param['max_price']
         self.area: str = param['area']
         self.page = 1
         self.dest: str = param['dest']
@@ -109,13 +109,13 @@ class Query(Enum):
         'min_price': 1000,
         'max_price': 2600,
         'area': 18,
-        'dest': 'yungchingTaipei.json'
-    },
+        'dest': 'yungchingTaipei.json',
+    }
 
     NewTaipei = {
         'city': '新北市',
         'min_price': 800,
         'max_price': 2000,
         'area': 25,
-        'dest': 'yungchingNewTaipei.json'
+        'dest': 'yungchingNewTaipei.json',
     }
