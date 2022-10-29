@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from collections import namedtuple
+from enum import Enum
 import logging
 import json
 import time
@@ -8,119 +10,126 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 
-from .base import Base
+from .base import House, URL
 
-URL = "https://sale.591.com.tw/?shType=list&regionid=1&kind=9&price=1000$_2600$&area=18$_$&houseage=25$_45$&shape=0"
+Node = namedtuple('Node', ('tag', 'class_name'))
+QueryParam = namedtuple('QueryParam', ('params', 'dest'))
 
 
-class Element:
+class Element(Enum):
 
-    def __init__(self, element) -> None:
-        self.element = element
+    Item = Node('div', 'houseList-item')
+    Title = Node('div', 'houseList-item-title')
+    Elements = {
+        'purpose': Node('span', 'houseList-item-attrs-purpose'),
+        'room': Node('span', 'houseList-item-attrs-room'),
+        'area': Node('span', 'houseList-item-attrs-area'),
+        'main_area': Node('span', 'houseList-item-attrs-mainarea'),
+        'address': Node('span', 'houseList-item-address'),
+        'layout': Node('span', 'houseList-item-attrs-layout'),
+        'section': Node('span', 'houseList-item-section'),
+        'age': Node('span', 'houseList-item-attrs-houseage'),
+        'price': Node('div', 'houseList-item-price'),
+        'floor': Node('span', 'houseList-item-attrs-floor'),
+        'shape': Node('span', 'houseList-item-attrs-shape'),
+    }
+    TotalRows = Node('div', 'houseList-head-title')
 
-    def fetch(self, clssType: str, className: str):
-        item = self.element.find(clssType, class_=className)
-        return "" if item is None else item.text.strip()
 
-    @property
-    def title(self):
-        title = self.element.find('div', class_='houseList-item-title')
-        return title.text.strip()
-
-    @property
-    def link(self):
-        title = self.element.find('div', class_='houseList-item-title')
-        return title.a['href']
-
-    @property
-    def purpose(self):
-        return self.fetch('span', 'houseList-item-attrs-purpose')
-
-    @property
-    def room(self):
-        return self.fetch('span', 'houseList-item-attrs-room')
+class Sale591(House):
 
     @property
-    def area(self):
-        return self.fetch('span', 'houseList-item-attrs-area')
+    def base_url(self) -> str:
+        return 'https://sale.591.com.tw'
 
-    @property
-    def mainarea(self):
-        return self.fetch('span', 'houseList-item-attrs-mainarea')
+    def fetch_one(self, soup: BeautifulSoup):
+        for input in soup.find_all(
+                Element.Item.value.tag,
+                class_=Element.Item.value.class_name):
 
-    @property
-    def address(self):
-        return self.fetch('span', 'houseList-item-address')
+            result = {}
+            titleNode = input.find(
+                Element.Title.value.tag,
+                class_=Element.Title.value.class_name)
 
-    @property
-    def layout(self):
-        return self.fetch('span', 'houseList-item-attrs-layout')
+            result['title'] = titleNode.text.strip()
+            result['link'] = titleNode.a['href']
+            for key, node in Element.Elements.value.items():
+                item = input.find(node.tag, class_=node.class_name)
+                result[key] = '' if item is None else item.text.strip()
 
-    @property
-    def section(self):
-        return self.fetch('span', 'houseList-item-section').replace('-', '')
+            yield result
 
-    @property
-    def age(self):
-        return self.fetch('span', 'houseList-item-attrs-houseage')
-
-    @property
-    def price(self):
-        return self.fetch('div', 'houseList-item-price')
-
-    @property
-    def floor(self):
-        return self.fetch('span', 'houseList-item-attrs-floor')
-
-    @property
-    def shape(self):
-        return self.fetch('span', 'houseList-item-attrs-shape')
-
-    @property
-    def dict(self):
-        return {
-            'Name': self.title,
-            'Link': self.link,
-            'Type': self.shape,
-            'Room': self.room,
-            'Floor': self.floor,
-            'Area': self.area,
-            'MainArea': self.mainarea,
-            'Layout': self.layout,
-            'Price': self.price,
-            'Location': self.section,
-            'Address': self.address,
-            'Age': self.age,
-        }
-
-
-class Rent(Base):
-
-    file = 'rent.json'
-
-    def fetch_one(self, soup):
-        for element in soup.find_all('div', class_='houseList-item'):
-            data = Element(element)
-            yield data.dict
-
-    def run(self) -> None:
-        self.driver.get(URL)
+    def run(self, args: QueryParam) -> None:
         method = expected_conditions.presence_of_element_located(
-            (By.CLASS_NAME, 'houseList-item'))
-        candidate = []
-        visits = []
-        while len(visits) == 0 or visits[-1] != self.driver.current_url:
+            (By.CLASS_NAME, Element.Item.value.class_name))
+
+        params = args.params
+        results = []
+        params['firstRow'] = 0
+
+        while 'totalRows' not in params or params['firstRow'] < params['totalRows']:
+            url = URL.build(self.base_url, params=params)
+            self.driver.get(url)
             print(self.driver.current_url)
-            visits.append(self.driver.current_url)
             try:
                 WebDriverWait(self.driver, 10).until(method)
             except Exception as e:
                 logging.warning(e)
                 return
             soup = BeautifulSoup(self.driver.page_source, 'html.parser')
-            candidate.extend(self.fetch_one(soup=soup))
-            element = self.driver.find_element(By.CLASS_NAME, 'pageNext')
-            self.driver.execute_script('arguments[0].click();', element)
-            with open(self.file, 'w') as f:
-                f.write(json.dumps(candidate))
+            results.extend(self.fetch_one(soup=soup))
+
+            if 'totalRows' not in params:
+                content = soup.find(
+                    Element.TotalRows.value.tag,
+                    class_=Element.TotalRows.value.class_name)
+                count = ''
+                for char in content.text:
+                    if char.isdigit():
+                        count += char
+                params['totalRows'] = int(count)
+
+            params['firstRow'] += 30
             time.sleep(5)
+
+            with open(args.dest, 'w') as f:
+                f.write(json.dumps(results))
+
+
+class Query(Enum):
+
+    Taipei = [
+        QueryParam({
+            'shType': 'list',
+            'regionid': 1,
+            'kind': 9,
+            'price': '1000$_2600$',
+            'area': '18$_$',
+            'houseage': '25$_45$',
+            'shape': 0,
+        }, 'taipei_591.json'),
+    ]
+
+    NewTaipei = [
+        QueryParam({
+            'shType': 'list',
+            'regionid': 3,
+            'kind': 9,
+            'price': '1000$_2000$',
+            'area': '25$_$',
+            'houseage': '$_30$',
+            'shape': 0,
+            'section': '38,37,26,34,44',
+        }, 'new_tapite_591_1.json'),
+        QueryParam({
+            'shType': 'list',
+            'regionid': 3,
+            'kind': 9,
+            'price': '1000$_2000$',
+            'area': '25$_$',
+            'houseage': '$_30$',
+            'shape': 0,
+            'section': '46,27,43',
+        }, 'new_tapite_591_2.json'),
+    ]

@@ -1,8 +1,6 @@
 #! ./venv/bin/python3.11
 # -*- coding: utf-8 -*-
 import json
-from collections import defaultdict
-from numpy import maximum
 
 from selenium import webdriver
 from selenium.webdriver.firefox.service import Service
@@ -11,70 +9,93 @@ import pandas
 
 from house import rent
 
+driverPath = '/usr/bin/geckodriver'
 
-def get_rent(name='/usr/bin/geckodriver') -> None:
+
+def fetchRent() -> None:
     opts = FirefoxOptions()
     opts.headless = True
-    service = Service(name)
+    service = Service(driverPath)
     driver = webdriver.Firefox(service=service, options=opts)
-    rents = rent.Rent(driver=driver)
-    rents.run()
+    obj = rent.Sale591(driver=driver)
+
+    for data in rent.Query:
+        for param in data.value:
+            obj.run(param)
+
     driver.close()
     driver.quit()
 
 
-def get_candidates(name='rent.json') -> pandas.DataFrame:
-    with open(name, 'r') as f:
-        out = json.loads(f.read())
+class DataArrange:
 
-    memory = set()
-    array = []
-    for data in out:
-        key = (data['Address'], data['Price'])
-        if key in memory:
-            continue
-
+    @staticmethod
+    def isValid(data: dict) -> bool:
         if data['Floor'] != '':
-
             current, maximum = data['Floor'].split('/')
             if current == maximum:
-                continue
+                return False
 
             if current[0] in ('1', '2'):
-                continue
+                return False
 
             if not current[0].isdigit():
-                continue
+                return False
 
             if data['Type'] == '公寓' and current[0] > '3':
-                continue
+                return False
 
         if data['MainArea'] == '':
-            continue
+            return False
 
         if float(data['MainArea'][2:-1]) < 23:
-            continue
+            return False
 
         if int(data['Age'][:-1]) > 40:
-            continue
+            return False
 
-        data['Link'] = 'https://sale.591.com.tw' + data['Link']
+        return True
 
-        memory.add(key)
-        array.append(data)
-    return pandas.DataFrame(array)
+    @classmethod
+    def source(cls, src: str, prefix: str) -> pandas.DataFrame:
+        with open(src, 'r') as f:
+            out = json.loads(f.read())
 
+        memory = set()
+        array = []
+        for data in out:
+            key = (data['Address'], data['Price'])
+            if key in memory:
+                continue
 
-def to_xlsx(candidates: pandas.DataFrame, name='output.xlsx'):
-    output = pandas.DataFrame()
-    for candidate in candidates.groupby(['Location', 'Age', 'Type']):
-        df = candidate[1].sort_values(by=['MainArea'])
-        output = pandas.concat([output, df])
-    output.to_excel(name)
+            if not cls.isValid(data):
+                continue
+
+            data['Link'] = prefix + data['Link']
+
+            memory.add(key)
+            array.append(data)
+        return pandas.DataFrame(array)
+
+    @staticmethod
+    def saveXLSX(src: pandas.DataFrame, dest: str) -> None:
+        output = pandas.DataFrame()
+        for candidate in src.groupby(['Location', 'Age', 'Type']):
+            df = candidate[1].sort_values(by=['MainArea'])
+            output = pandas.concat([output, df])
+        output.to_excel(dest)
+
+    @classmethod
+    def exec(cls, src: str, dest: str, prefix: str) -> None:
+        source = cls.source(src=src, prefix=prefix)
+        cls.saveXLSX(src=source, dest=dest)
 
 
 # 2000+11500+2655+(3179+2080+9060+4160+2080+4380+4660+4160+4160)/2+12500
 if __name__ == '__main__':
-    get_rent()
-    # candidates = get_candidates()
-    # to_xlsx(candidates)
+    fetchRent()
+    # 'rentTaipei.json'
+    # 'rentNewTaipei1.json'
+    # 'rentNewTaipei2.json'
+    # DataArrange.exec('rent.json', 'rentTaipei.xlsx', 'https://sale.591.com.tw')
+    pass
