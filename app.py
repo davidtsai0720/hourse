@@ -7,7 +7,8 @@ from parse import parse
 
 app = Flask(__name__)
 
-rows = parse.Parse.filter(parse.Parse.fetch_all('output'))
+raw = parse.Parse.fetch_all('output')
+rows = parse.Parse.filter(raw)
 default_value = pandas.DataFrame(rows).sort_values(by=['section', 'age', 'main_area', 'price'])
 default_keys = tuple(default_value)
 default_city = '台北市'

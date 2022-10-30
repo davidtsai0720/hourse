@@ -8,7 +8,6 @@ from selenium.webdriver.firefox.service import Service
 from selenium.webdriver import FirefoxOptions
 
 from crawler import sale591, yungching
-from parse import parse
 
 
 options = FirefoxOptions()
@@ -29,6 +28,7 @@ class Logging(Enum):
 
 
 logging.basicConfig(
+    filename=Logging.filename.value,
     level=Logging.level.value,
     format=Logging.format.value,
     datefmt=Logging.datefmt.value)
@@ -55,9 +55,4 @@ def exec_crawler() -> None:
 
 
 if __name__ == '__main__':
-    # exec_crawler()
-    data = parse.Parse.fetch_all('output')
-    df = parse.Parse.filter(data)
-    df.to_excel('result.xlsx')
-    for section, row in df.groupby('section'):
-        print(section, len(row))
+    exec_crawler()
