@@ -39,17 +39,27 @@ def filter():
         if age and float(row['age'][:-1]) >= float(age):
             continue
 
+        if row['shape'] == '公寓' and row['floor'] != '3':
+            continue
+
+        if row['shape'] == '工廠':
+            continue
+
         candidate.append(row)
+
+    if len(candidate) == 0:
+        return render_template(
+            'index.html', data=candidate, main_area=main_area,
+            section=section, price=price, city=city, age=age)
 
     df = pandas.DataFrame(candidate).sort_values(by=['section', 'age', 'main_area', 'price'])
     data = []
     for value in df.values.tolist():
-        print(value)
         data.append(dict(zip(tuple(df), value)))
 
     return render_template(
         'index.html', data=data, main_area=main_area,
-        section=section, price=price, city=default_city, age=age)
+        section=section, price=price, city=city, age=age)
 
 
 @app.route("/")

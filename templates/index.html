@@ -50,7 +50,7 @@
         </tr>
         {% for item in data %}
         <tr>
-            <td>{{ item.address }}</td>
+            <td> <a href="https://www.google.com/search?q={{ item.address }}&sourceid=chrome&ie=UTF-8">{{ item.address }}</a> </td>
             <td>{{ item.price }} 萬</td>
             <td>{{ item.floor }}</td>
             <td>{{ item.shape }}</td>
