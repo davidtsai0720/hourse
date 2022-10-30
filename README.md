@@ -24,3 +24,7 @@ $ ./main.py
 ```sh
 $ autopep8 --in-place --aggressive *.py --max-line-length 120
 ```
+
+```sh
+$ flask run --host=0.0.0.0 --reload
+```

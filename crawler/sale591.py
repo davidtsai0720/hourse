@@ -26,9 +26,6 @@ class Param(AbcParam):
     def alive(self) -> bool:
         return self.can_update_total_count() or self.page * Item.PageSize.value < self.total_count
 
-    def can_update_total_count(self) -> bool:
-        return self.__dict__.get('total_count', None) is None
-
     def dict(self) -> dict:
         result = {
             'shType': self.shType,

@@ -16,14 +16,11 @@ class Param(AbcParam):
         self.min_price: int = param['min_price']
         self.max_price: int = param['max_price']
         self.area: str = param['area']
-        self.page = 1
         self.dest: str = param['dest']
+        self.page = 1
 
     def alive(self) -> bool:
         return self.can_update_total_count() or (self.page - 1) * Item.PageSize.value < self.total_count
-
-    def can_update_total_count(self) -> bool:
-        return self.__dict__.get('total_count', None) is None
 
     def dict(self) -> dict:
         return {

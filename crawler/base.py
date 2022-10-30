@@ -49,9 +49,8 @@ class AbcParam(abc.ABC):
     def alive(self) -> bool:
         return False
 
-    @abc.abstractmethod
     def can_update_total_count(self) -> bool:
-        return False
+        return self.__dict__.get('total_count', None) is None
 
     def set_next(self) -> None:
         self.page += 1
