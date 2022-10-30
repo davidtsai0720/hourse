@@ -1,19 +1,15 @@
 # -*- coding: utf-8 -*-
 from enum import Enum
 from collections.abc import Iterator
-import random
-import logging
-import time
 
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
-from selenium.webdriver.support.ui import WebDriverWait
 
-from .base import House, URL, Node
+from .base import House, URL, Node, AbcParam
 
 
-class Param:
+class Param(AbcParam):
 
     def __init__(self, param: dict) -> None:
         self.shType: str = 'list'
@@ -21,27 +17,18 @@ class Param:
         self.kind: int = param['kind']
         self.price: str = param['price']
         self.area: str = param['area']
-        self.houseage: str = param['houseage']
+        self.age: str = param['houseage']
         self.dest: str = param['dest']
-        self.firstRow = 0
+        self.page = 0
         if 'section' in param:
             self.section: str = param['section']
 
-    def set_firstRow(self, num: int) -> None:
-        self.firstRow = num
-
-    def set_totalRows(self, num: int) -> None:
-        self.totalRows = num
-
-    @property
     def alive(self) -> bool:
-        return self.can_update_total or self.firstRow < self.totalRows
+        return self.can_update_total_count() or self.page * Item.PageSize.value < self.total_count
 
-    @property
-    def can_update_total(self) -> bool:
-        return self.__dict__.get('totalRows', None) is None
+    def can_update_total_count(self) -> bool:
+        return self.__dict__.get('total_count', None) is None
 
-    @property
     def dict(self) -> dict:
         result = {
             'shType': self.shType,
@@ -49,15 +36,15 @@ class Param:
             'kind': self.kind,
             'price': self.price,
             'area': self.area,
-            'houseage': self.houseage,
-            'firstRow': self.firstRow,
+            'houseage': self.age,
+            'firstRow': self.page * Item.PageSize.value,
         }
 
         if self.__dict__.get('section', None) is not None:
             result['section']: str = self.section
 
-        if self.__dict__.get('totalRows', None) is not None:
-            result['totalRows']: int = self.totalRows
+        if self.__dict__.get('total_count', None) is not None:
+            result['totalRows']: int = self.total_count
 
         return result
 
@@ -84,10 +71,10 @@ class Item(Enum):
     PageSize = 30
 
 
-method = expected_conditions.presence_of_element_located((By.CLASS_NAME, Item.Item.value.class_name))
-
-
 class Sale591(House):
+
+    def get_method(self):
+        return expected_conditions.presence_of_element_located((By.CLASS_NAME, Item.Item.value.class_name))
 
     def fetch_one(self, soup: BeautifulSoup) -> Iterator[dict]:
         for input in soup.find_all(Item.Item.value.tag, class_=Item.Item.value.class_name):
@@ -102,30 +89,16 @@ class Sale591(House):
 
             yield result
 
+    def get_current_url(self, param: AbcParam) -> str:
+        return URL.build(Item.URL.value, params=param.dict())
+
+    def get_total_count(self, soup: BeautifulSoup) -> str:
+        node = soup.find(Item.TotalRows.value.tag, class_=Item.TotalRows.value.class_name)
+        return node.text
+
     def run(self, mymap: dict) -> None:
         param = Param(mymap)
-        results = []
-        while param.alive:
-            current_url = URL.build(Item.URL.value, params=param.dict)
-            logging.info(current_url)
-            self.driver.get(current_url)
-
-            try:
-                WebDriverWait(self.driver, 10).until(method)
-            except Exception as e:
-                logging.error(e)
-                continue
-
-            soup = BeautifulSoup(self.driver.page_source, 'html.parser')
-            results.extend(self.fetch_one(soup=soup))
-
-            if param.can_update_total:
-                node = soup.find(Item.TotalRows.value.tag, class_=Item.TotalRows.value.class_name)
-                param.set_totalRows(self.value(node.text))
-
-            param.set_firstRow(param.firstRow + Item.PageSize.value)
-            time.sleep(random.uniform(5, 9))
-            self.save(dest=param.dest, data=results)
+        super().run(param=param)
 
 
 class Query(Enum):

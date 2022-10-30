@@ -1,10 +1,17 @@
 # -*- coding: utf-8 -*-
 from collections import namedtuple
+from collections.abc import Iterator
 import abc
 import json
 import os
+import random
+import logging
+import time
 
 from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from bs4 import BeautifulSoup
+
 
 Node = namedtuple('Node', ('tag', 'class_name'))
 
@@ -28,14 +35,76 @@ class URL:
         return f'{host}?{args}'
 
 
+class AbcParam(abc.ABC):
+
+    @abc.abstractmethod
+    def __init__(self, param: dict) -> None:
+        pass
+
+    @abc.abstractmethod
+    def dict(self) -> dict:
+        return {}
+
+    @abc.abstractmethod
+    def alive(self) -> bool:
+        return False
+
+    @abc.abstractmethod
+    def can_update_total_count(self) -> bool:
+        return False
+
+    def set_next(self) -> None:
+        self.page += 1
+
+    def set_total_count(self, num: int) -> None:
+        self.total_count = num
+
+
 class House(abc.ABC):
 
     def __init__(self, driver: webdriver.Firefox) -> None:
         self.driver = driver
 
     @abc.abstractmethod
-    def run(self, param: any) -> None:
+    def get_current_url(self, param: AbcParam) -> str:
         pass
+
+    @abc.abstractmethod
+    def fetch_one(self, soup: BeautifulSoup) -> Iterator[dict]:
+        pass
+
+    @abc.abstractmethod
+    def get_total_count(self, soup: BeautifulSoup) -> str:
+        pass
+
+    @abc.abstractmethod
+    def get_method(self):
+        pass
+
+    def run(self, param: AbcParam):
+        method = self.get_method()
+        results = []
+        while param.alive():
+            current_url = self.get_current_url(param=param)
+            self.driver.get(url=current_url)
+            logging.info(current_url)
+
+            try:
+                WebDriverWait(self.driver, 10).until(method)
+            except Exception as e:
+                logging.error(e)
+                continue
+
+            soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+            results.extend(self.fetch_one(soup=soup))
+
+            if param.can_update_total_count():
+                text = self.get_total_count(soup=soup)
+                param.set_total_count(self.value(text=text))
+
+            param.set_next()
+            time.sleep(random.uniform(5, 9))
+            self.save(dest=param.dest, data=results)
 
     @property
     def wdir(self) -> str:

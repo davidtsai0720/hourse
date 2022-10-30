@@ -1,19 +1,15 @@
 # -*- coding: utf-8 -*-
-from audioop import add
 from collections.abc import Iterator
-from curses.ascii import isdigit
 from enum import Enum
-import random
-import logging
-import time
 
 from bs4 import BeautifulSoup
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions
 
-from .base import House, Node
-# https://buy.yungching.com.tw/region/台北市-_c/1000-2600_price/18-_pinby/
+from .base import House, Node, AbcParam
 
 
-class Param:
+class Param(AbcParam):
 
     def __init__(self, param: dict) -> None:
         self.city: str = param['city']
@@ -23,18 +19,12 @@ class Param:
         self.page = 1
         self.dest: str = param['dest']
 
-    def set_total_count(self, num: int) -> None:
-        self.total_count = num
-
-    @property
     def alive(self) -> bool:
-        return self.can_update_total or self.page * Item.PageSize.value < self.total_count
+        return self.can_update_total_count() or (self.page - 1) * Item.PageSize.value < self.total_count
 
-    @property
-    def can_update_total(self) -> bool:
+    def can_update_total_count(self) -> bool:
         return self.__dict__.get('total_count', None) is None
 
-    @property
     def dict(self) -> dict:
         return {
             'city': self.city,
@@ -60,6 +50,9 @@ class Item(Enum):
 
 class YungChing(House):
 
+    def get_method(self):
+        return expected_conditions.presence_of_element_located((By.CLASS_NAME, Item.Item.value.class_name))
+
     def fetch_one(self, soup: BeautifulSoup) -> Iterator[dict]:
         for element in soup.find_all(Item.Item.value.tag, class_=Item.Item.value.class_name):
             title = element.find(Item.Title.value.tag, class_=Item.Title.value.class_name)
@@ -76,30 +69,24 @@ class YungChing(House):
 
             detail = element.find(Item.Detail.value.tag, class_=Item.Detail.value.class_name)
             updates = dict(zip(Item.Fields.value, (node.text.strip() for node in detail.find_all('li'))))
-            updates['floor'] = updates['floor'].split('~')[1].strip().replace(' ', '')
-            updates['floor'] = '/'.join(f'{floor}F' for floor in updates['floor'][:-1].split('/'))
+
+            if updates['floor'] != '':
+                updates['floor'] = updates['floor'].split('~')[1].strip().replace(' ', '')
+                updates['floor'] = '/'.join(f'{floor}F' for floor in updates['floor'][:-1].split('/'))
 
             result.update(updates)
             yield result
 
+    def get_current_url(self, param: AbcParam) -> str:
+        return Item.URL.value.format(**param.dict())
+
+    def get_total_count(self, soup: BeautifulSoup) -> str:
+        node = soup.find(Item.TotalCount.value.tag, class_=Item.TotalCount.value.class_name)
+        return node.text
+
     def run(self, mymap: dict) -> None:
         param = Param(mymap)
-        results = []
-        while param.alive:
-            url = Item.URL.value.format(**param.dict)
-            self.driver.get(url=url)
-            logging.info(self.driver.current_url)
-
-            soup = BeautifulSoup(self.driver.page_source, 'html.parser')
-            results.extend(self.fetch_one(soup=soup))
-
-            if param.can_update_total:
-                node = soup.find(Item.TotalCount.value.tag, class_=Item.TotalCount.value.class_name)
-                param.set_total_count(self.value(node.text))
-
-            param.page += 1
-            time.sleep(random.uniform(5, 9))
-            self.save(dest=param.dest, data=results)
+        super().run(param=param)
 
 
 class Query(Enum):
