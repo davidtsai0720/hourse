@@ -1,7 +1,9 @@
 #! ./venv/bin/python3.11
 # -*- coding: utf-8 -*-
+import psycopg2
 from enum import Enum
 import logging
+import textwrap
 
 from selenium import webdriver
 from selenium.webdriver.firefox.service import Service
