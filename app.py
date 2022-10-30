@@ -44,7 +44,8 @@ def filter():
     df = pandas.DataFrame(candidate).sort_values(by=['section', 'age', 'main_area', 'price'])
     data = []
     for value in df.values.tolist():
-        data.append(dict(zip(default_keys, value)))
+        print(value)
+        data.append(dict(zip(tuple(df), value)))
 
     return render_template(
         'index.html', data=data, main_area=main_area,
