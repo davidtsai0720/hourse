@@ -20,7 +20,7 @@ class Param(AbcParam):
         self.area: str = param['area']
         self.age: str = param['houseage']
         self.dest: str = param['dest']
-        self.page = 0
+        self.page = 1
         if 'section' in param:
             self.section: str = param['section']
 
@@ -74,7 +74,7 @@ class Sale591(House):
     def get_method(self):
         return expected_conditions.presence_of_element_located((By.CLASS_NAME, Item.Item.value.class_name))
 
-    def fetch_one(self, soup: BeautifulSoup) -> Iterator[dict]:
+    def fetchone(self, soup: BeautifulSoup) -> Iterator[dict]:
         for input in soup.find_all(Item.Item.value.tag, class_=Item.Item.value.class_name):
             result = {}
             titleNode = input.find(Item.Title.value.tag, class_=Item.Title.value.class_name)

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from collections import namedtuple
 from collections.abc import Iterator
+import textwrap
 import abc
 import random
 import logging
@@ -59,11 +60,20 @@ class AbcParam(abc.ABC):
         self.total_count = num
 
 
+insert_syntax = textwrap.dedent('''
+INSERT INTO hourse
+(section_id, link, layout, address, price, current_floor, total_floor, shape, age, area, main_area, raw)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+ON CONFLICT (link)
+DO UPDATE
+SET updated_at = CURRENT_TIMESTAMP, price = EXCLUDED.price;''')
+keys = ('section_id', 'link', 'layout', 'address', 'price', 'current_floor', 'total_floor', 'shape', 'age', 'area', 'main_area', 'raw')
+
+
 class House(abc.ABC):
 
-    def __init__(self, driver: webdriver.Firefox, conn) -> None:
+    def __init__(self, driver: webdriver.Firefox) -> None:
         self.driver = driver
-        self.conn = conn
         self.section: dict = {}
 
     @abc.abstractmethod
@@ -71,7 +81,7 @@ class House(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def fetch_one(self, soup: BeautifulSoup) -> Iterator[dict]:
+    def fetchone(self, soup: BeautifulSoup) -> Iterator[dict]:
         pass
 
     @abc.abstractmethod
@@ -93,11 +103,15 @@ class House(abc.ABC):
                 WebDriverWait(self.driver, 10).until(method)
             except Exception as e:
                 logging.error(e)
+                assert False, e
                 continue
 
             soup = BeautifulSoup(self.driver.page_source, 'html.parser')
-            for result in self.fetch_one(soup=soup):
-                self.insert(result)
+            for result in self.fetchone(soup=soup):
+                try:
+                    self.insert(result)
+                except Exception as e:
+                    logging.error(f'error: {e}, data is {result}')
 
             if param.can_update_total_count():
                 text = self.get_total_count(soup=soup)
@@ -110,21 +124,19 @@ class House(abc.ABC):
         try:
             return self.section[section]
         except Exception:
-            with self.conn.cursor() as cursor:
-                cursor.execute('SELECT id FROM section WHERE name = %s', (section,))
-                record = cursor.fetchone()
-                self.section[section] = record[0]
+            record = Postgres.fetchone('SELECT id FROM section WHERE name = %s', (section, ))
+            self.section[section] = record[0]
             return self.section[section]
 
     def insert(self, mymap: dict) -> None:
-        keys = ('section_id', 'link', 'layout', 'address', 'price', 'floor', 'shape', 'age', 'area', 'main_area', 'raw')
         data = []
+        mymap['current_floor'], mymap['total_floor'] = mymap['floor'].split('/')
         for key in keys:
             value = mymap[key] if key != 'section_id' else self.section_id(mymap['section'])
             if not mymap['main_area']:
                 mymap['main_area'] = None
             data.append(value)
-        Postgres.insert(self.conn, data)
+        Postgres.execute(syntax=insert_syntax, param=data)
 
     def value(self, text: str) -> decimal.Decimal:
         count = ''

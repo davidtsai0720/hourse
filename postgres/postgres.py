@@ -9,13 +9,6 @@ user = "postgres"
 password = "postgres"
 sslmode = "disable"
 conn_string = f"host={host} user={user} dbname={dbname} password={password} sslmode={sslmode}"
-insert_syntax = textwrap.dedent('''
-INSERT INTO hourse (section_id, link, layout, address, price, floor, shape, age, area, main_area, raw)
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-ON CONFLICT (link)
-DO UPDATE
-SET updated_at = CURRENT_TIMESTAMP, price = EXCLUDED.price;
-''')
 
 update_syntax = textwrap.dedent('''
 UPDATE hourse
@@ -27,21 +20,30 @@ WHERE link = %s;
 class Postgres:
 
     @staticmethod
-    def conn():
-        return psycopg2.connect(conn_string)
-
-    @staticmethod
-    def close(conn):
+    def execute(syntax: str, param: list):
+        conn = psycopg2.connect(conn_string)
+        cursor = conn.cursor()
+        cursor.execute(syntax, (*param,))
+        conn.commit()
+        cursor.close()
         conn.close()
 
     @staticmethod
-    def insert(conn, param: list):
-        with conn.cursor() as cursor:
-            cursor.execute(insert_syntax, (*param,))
-            conn.commit()
-
+    def fetchone(syntax: str, param: list):
+        conn = psycopg2.connect(conn_string)
+        cursor = conn.cursor()
+        cursor.execute(syntax, (*param,))
+        record = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        return record
+    
     @staticmethod
-    def update_commit(conn, commit: str, link: str):
-        with conn.cursor() as cursor:
-            cursor.execute(update_syntax, (commit, link))
-            conn.commit()
+    def fetchall(syntax: str, param: list):
+        conn = psycopg2.connect(conn_string)
+        cursor = conn.cursor()
+        cursor.execute(syntax)
+        record = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return record

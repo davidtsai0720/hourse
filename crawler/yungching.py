@@ -51,7 +51,7 @@ class YungChing(House):
     def get_method(self):
         return expected_conditions.presence_of_element_located((By.CLASS_NAME, Item.Item.value.class_name))
 
-    def fetch_one(self, soup: BeautifulSoup) -> Iterator[dict]:
+    def fetchone(self, soup: BeautifulSoup) -> Iterator[dict]:
         for element in soup.find_all(Item.Item.value.tag, class_=Item.Item.value.class_name):
             title = element.find(Item.Title.value.tag, class_=Item.Title.value.class_name)
             result = {
