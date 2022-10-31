@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from enum import Enum
 from collections.abc import Iterator
+import json
 
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
@@ -80,10 +81,26 @@ class Sale591(House):
 
             result['title'] = titleNode.text.strip()
             result['link'] = titleNode.a['href']
+
+            if 'newhouse' in result['link']:
+                continue
+
             for key, node in Item.Fields.value.items():
                 item = input.find(node.tag, class_=node.class_name)
                 result[key] = '' if item is None else item.text.strip()
 
+            result['raw'] = json.dumps(result)
+            result['section'] = result['section'][:-1]
+            result['link'] = 'https://sale.591.com.tw' + result['link']
+
+            if result['main_area']:
+                result['main_area'] = self.value(result['main_area'])
+
+            if result['area']:
+                result['area'] = self.value(result['area'])
+
+            if result['price']:
+                result['price'] = int(self.value(result['price'].split('  ')[-1]))
             yield result
 
     def get_current_url(self, param: AbcParam) -> str:

@@ -42,16 +42,16 @@ class Sinyi(House):
 
     def get_current_url(self, param: AbcParam) -> str:
         return Item.URL.value.format(**param.dict())
-    
+
     def fetch_one(self, soup: BeautifulSoup) -> Iterator[dict]:
         return super().fetch_one(soup)
 
     def get_total_count(self, soup: BeautifulSoup) -> str:
         return super().get_total_count(soup)
-    
+
     def get_method(self):
         return super().get_method()
-    
+
     def run(self, mymap: dict):
         param = Param(mymap)
         return super().run(param=param)

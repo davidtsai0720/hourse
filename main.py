@@ -3,14 +3,13 @@
 import psycopg2
 from enum import Enum
 import logging
-import textwrap
 
 from selenium import webdriver
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver import FirefoxOptions
 
 from crawler import sale591, yungching
-
+from postgres.postgres import Postgres
 
 options = FirefoxOptions()
 options.headless = True
@@ -39,19 +38,21 @@ logging.basicConfig(
 def exec_crawler() -> None:
     service = Service(Setting.driverPath.value)
     driver = webdriver.Firefox(service=service, options=options)
+    conn = Postgres.conn()
     try:
-        obj = sale591.Sale591(driver=driver)
+        sale = sale591.Sale591(driver=driver, conn=conn)
         for param in sale591.Query:
-            obj.run(param.value)
+            sale.run(param.value)
 
-        obj = yungching.YungChing(driver=driver)
+        yc = yungching.YungChing(driver=driver, conn=conn)
         for param in yungching.Query:
-            obj.run(param.value)
+            yc.run(param.value)
 
     except Exception as e:
         logging.error(e)
 
     finally:
+        conn.close()
         driver.close()
         driver.quit()
 

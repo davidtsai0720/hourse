@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from collections.abc import Iterator
 from enum import Enum
+import json
 
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
@@ -72,6 +73,20 @@ class YungChing(House):
                 updates['floor'] = '/'.join(f'{floor}F' for floor in updates['floor'][:-1].split('/'))
 
             result.update(updates)
+
+            result['raw'] = json.dumps(result)
+            result['link'] = 'https://buy.yungching.com.tw' + result['link']
+            result['section'] = result['address'][3:6]
+            if result['main_area']:
+                result['main_area'] = self.value(result['main_area'])
+
+            if result['area']:
+                result['area'] = self.value(result['area'])
+
+            result['price'] = int(self.value(result['price'].replace(',', '')))
+            result['address'] = result['address'][6:]
+            result['layout'] = result['room']
+
             yield result
 
     def get_current_url(self, param: AbcParam) -> str:

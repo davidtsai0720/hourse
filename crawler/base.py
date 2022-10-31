@@ -2,16 +2,16 @@
 from collections import namedtuple
 from collections.abc import Iterator
 import abc
-import json
-import os
 import random
 import logging
 import time
+import decimal
 
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from bs4 import BeautifulSoup
 
+from postgres.postgres import Postgres
 
 Node = namedtuple('Node', ('tag', 'class_name'))
 
@@ -61,8 +61,10 @@ class AbcParam(abc.ABC):
 
 class House(abc.ABC):
 
-    def __init__(self, driver: webdriver.Firefox) -> None:
+    def __init__(self, driver: webdriver.Firefox, conn) -> None:
         self.driver = driver
+        self.conn = conn
+        self.section: dict = {}
 
     @abc.abstractmethod
     def get_current_url(self, param: AbcParam) -> str:
@@ -82,7 +84,6 @@ class House(abc.ABC):
 
     def run(self, param: AbcParam):
         method = self.get_method()
-        results = []
         while param.alive():
             current_url = self.get_current_url(param=param)
             self.driver.get(url=current_url)
@@ -95,7 +96,8 @@ class House(abc.ABC):
                 continue
 
             soup = BeautifulSoup(self.driver.page_source, 'html.parser')
-            results.extend(self.fetch_one(soup=soup))
+            for result in self.fetch_one(soup=soup):
+                self.insert(result)
 
             if param.can_update_total_count():
                 text = self.get_total_count(soup=soup)
@@ -103,28 +105,30 @@ class House(abc.ABC):
 
             param.set_next()
             time.sleep(random.uniform(5, 9))
-            self.save(dest=param.dest, data=results)
 
-    @property
-    def wdir(self) -> str:
+    def section_id(self, section: str) -> int:
         try:
-            return self._wdir
-        except AttributeError:
-            wd = os.getcwd()
-            wdir = os.path.join(wd, 'output')
-            if not os.path.exists(wdir):
-                os.mkdir(wdir)
-            self._wdir = wdir
-            return self._wdir
+            return self.section[section]
+        except Exception:
+            with self.conn.cursor() as cursor:
+                cursor.execute('SELECT id FROM section WHERE name = %s', (section,))
+                record = cursor.fetchone()
+                self.section[section] = record[0]
+            return self.section[section]
 
-    def save(self, dest: str, data: list) -> None:
-        path = os.path.join(self.wdir, dest)
-        with open(path, 'w') as f:
-            f.write(json.dumps(data))
+    def insert(self, mymap: dict) -> None:
+        keys = ('section_id', 'link', 'layout', 'address', 'price', 'floor', 'shape', 'age', 'area', 'main_area', 'raw')
+        data = []
+        for key in keys:
+            value = mymap[key] if key != 'section_id' else self.section_id(mymap['section'])
+            if not mymap['main_area']:
+                mymap['main_area'] = None
+            data.append(value)
+        Postgres.insert(self.conn, data)
 
-    def value(self, text: str) -> int:
+    def value(self, text: str) -> decimal.Decimal:
         count = ''
         for char in text:
-            if char.isdigit():
+            if char.isdigit() or char == '.':
                 count += char
-        return int(count)
+        return decimal.Decimal(count)
