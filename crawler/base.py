@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from collections import namedtuple
 from collections.abc import Iterator
+from enum import Enum
 import textwrap
 import abc
 import random
@@ -67,7 +68,19 @@ VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
 ON CONFLICT (link)
 DO UPDATE
 SET updated_at = CURRENT_TIMESTAMP, price = EXCLUDED.price;''')
-keys = ('section_id', 'link', 'layout', 'address', 'price', 'current_floor', 'total_floor', 'shape', 'age', 'area', 'main_area', 'raw')
+keys = (
+    'section_id',
+    'link',
+    'layout',
+    'address',
+    'price',
+    'current_floor',
+    'total_floor',
+    'shape',
+    'age',
+    'area',
+    'main_area',
+    'raw')
 
 
 class House(abc.ABC):
@@ -103,8 +116,6 @@ class House(abc.ABC):
                 WebDriverWait(self.driver, 10).until(method)
             except Exception as e:
                 logging.error(e)
-                assert False, e
-                continue
 
             soup = BeautifulSoup(self.driver.page_source, 'html.parser')
             for result in self.fetchone(soup=soup):

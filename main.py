@@ -7,7 +7,7 @@ from selenium import webdriver
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver import FirefoxOptions
 
-from crawler import sale591, yungching
+from crawler import sale591, yungching, agent, sinyi
 
 options = FirefoxOptions()
 options.headless = True
@@ -42,8 +42,12 @@ def exec_crawler() -> None:
             sale.run(param.value)
 
         yc = yungching.YungChing(driver=driver)
-        for param in yungching.Query:
+        for param in agent.QueryParameter:
             yc.run(param.value)
+
+        sy = sinyi.Sinyi(driver=driver)
+        for param in agent.QueryParameter:
+            sy.run(param.value)
 
     except Exception as e:
         logging.error(e)

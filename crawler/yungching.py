@@ -8,29 +8,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 
 from .base import House, Node, AbcParam
-
-
-class Param(AbcParam):
-
-    def __init__(self, param: dict) -> None:
-        self.city: str = param['city']
-        self.min_price: int = param['min_price']
-        self.max_price: int = param['max_price']
-        self.area: str = param['area']
-        self.dest: str = param['dest']
-        self.page = 1
-
-    def alive(self) -> bool:
-        return self.can_update_total_count() or (self.page - 1) * Item.PageSize.value < self.total_count
-
-    def dict(self) -> dict:
-        return {
-            'city': self.city,
-            'min_price': self.min_price,
-            'max_price': self.max_price,
-            'area': self.area,
-            'page': self.page,
-        }
+from .agent import Param
 
 
 class Item(Enum):
@@ -56,7 +34,7 @@ class YungChing(House):
             title = element.find(Item.Title.value.tag, class_=Item.Title.value.class_name)
             result = {
                 'title': title.text.strip(),
-                'link': title["href"],
+                'link': title['href'],
             }
 
             price = element.find(Item.Price.value.tag, class_=Item.Price.value.class_name)
@@ -98,23 +76,5 @@ class YungChing(House):
 
     def run(self, mymap: dict) -> None:
         param = Param(mymap)
+        param.size = Item.PageSize.value
         super().run(param=param)
-
-
-class Query(Enum):
-
-    Taipei = {
-        'city': '台北市',
-        'min_price': 1000,
-        'max_price': 2600,
-        'area': 18,
-        'dest': 'yungchingTaipei.json',
-    }
-
-    NewTaipei = {
-        'city': '新北市',
-        'min_price': 800,
-        'max_price': 2000,
-        'area': 25,
-        'dest': 'yungchingNewTaipei.json',
-    }

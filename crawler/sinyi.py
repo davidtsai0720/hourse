@@ -1,41 +1,25 @@
 # -*- coding: utf-8 -*-
 from enum import Enum
 from collections.abc import Iterator
+import json
 
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 
-from .base import House, URL, Node, AbcParam
-
-
-class Param(AbcParam):
-
-    def __init__(self, param: dict) -> None:
-        self.city: str = param['city']
-        self.min_price: int = param['min_price']
-        self.max_price: int = param['max_price']
-        self.area: str = param['area']
-        self.dest: str = param['dest']
-        self.page = 1
-
-    def alive(self) -> bool:
-        return self.can_update_total_count() or (self.page - 1) * Item.PageSize.value < self.total_count
-
-    def dict(self) -> dict:
-        return {
-            'city': self.city,
-            'min_price': self.min_price,
-            'max_price': self.max_price,
-            'area': self.area,
-            'page': self.page,
-        }
+from .base import House, AbcParam, Node
+from .agent import Param
 
 
 class Item(Enum):
 
-    URL = 'https://www.sinyi.com.tw/buy/list/{min_price}-{max_price}-price/{area}-up-balconyarea/{city}-city/Taipei-R-mrtline/03-mrt/default-desc/1'
+    URL = 'https://www.sinyi.com.tw/buy/list/{min_price}-{max_price}-price/{area}-up-balconyarea/{city}-city/Taipei-R-mrtline/03-mrt/default-desc/{page}'
     PageSize = 20
+    Item = Node('div', 'buy-list-item')
+    TotalCount = Node('div', 'd-none d-lg-block')
+    Address = Node('div', 'LongInfoCard_Type_Address')
+    HourseInfo = Node('div', 'LongInfoCard_Type_HouseInfo')
+    Price = Node('div', 'LongInfoCard_Type_Right')
 
 
 class Sinyi(House):
@@ -44,33 +28,48 @@ class Sinyi(House):
         return Item.URL.value.format(**param.dict())
 
     def fetchone(self, soup: BeautifulSoup) -> Iterator[dict]:
-        return super().fetchone(soup)
+        for element in soup.find_all(Item.Item.value.tag, class_=Item.Item.value.class_name):
+            link = element.find('a')
+            link = 'https://www.sinyi.com.tw' + link['href']
+            result = {'link': link}
+
+            address = element.find(Item.Address.value.tag, class_=Item.Address.value.class_name)
+            result.update(dict(zip(
+                ('address', 'age', 'shape'),
+                (data.text.strip() for data in address.find_all('span')))))
+
+            hourse_info = element.find(Item.HourseInfo.value.tag, class_=Item.HourseInfo.value.class_name)
+            result.update(dict(zip(
+                ('area', 'main_area', 'layout', 'floor'),
+                (data.text.strip() for data in hourse_info.find_all('span')))))
+
+            price = element.find(Item.Price.value.tag, class_=Item.Price.value.class_name)
+            for node in price.find_all('span'):
+                if node.text.strip() == '萬':
+                    break
+                result['price'] = node.text.strip().replace(',', '')
+
+            result['raw'] = json.dumps(result)
+            result['price'] = self.value(result['price'])
+            result['floor'] = result['floor'].replace('樓', 'F')
+            result['section'] = result['address'][3:6]
+            result['address'] = result['address'][6:]
+            if result['main_area']:
+                result['main_area'] = self.value(result['main_area'])
+
+            if result['area']:
+                result['area'] = self.value(result['area'])
+
+            yield result
 
     def get_total_count(self, soup: BeautifulSoup) -> str:
-        return super().get_total_count(soup)
+        node = soup.find(Item.TotalCount.value.tag, class_=Item.TotalCount.value.class_name)
+        return node.find('div').text
 
     def get_method(self):
-        return super().get_method()
+        return expected_conditions.presence_of_element_located((By.CLASS_NAME, Item.Item.value.class_name))
 
-    def run(self, mymap: dict):
+    def run(self, mymap: dict) -> None:
         param = Param(mymap)
-        return super().run(param=param)
-
-
-class Query(Enum):
-
-    Taipei = {
-        'min_price': 1000,
-        'max_price': 2600,
-        'area': 18,
-        'city': 'Taipei',
-        'dest': 'sinyiTaipei.json',
-    }
-
-    NewTaipei = {
-        'min_price': 1000,
-        'max_price': 2600,
-        'area': 18,
-        'city': 'NewTaipei',
-        'dest': 'sinyiTaipei.json',
-    }
+        param.size = Item.PageSize.value
+        super().run(param=param)

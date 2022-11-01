@@ -19,7 +19,6 @@ class Param(AbcParam):
         self.price: str = param['price']
         self.area: str = param['area']
         self.age: str = param['houseage']
-        self.dest: str = param['dest']
         self.page = 1
         if 'section' in param:
             self.section: str = param['section']
