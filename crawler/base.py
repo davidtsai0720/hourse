@@ -15,6 +15,8 @@ from selenium.webdriver import FirefoxOptions
 from selenium.webdriver.support.ui import WebDriverWait
 from bs4 import BeautifulSoup
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 
 Node = namedtuple('Node', ('tag', 'class_name'))
@@ -70,6 +72,11 @@ class DecimalEncoder(json.JSONEncoder):
         return super(DecimalEncoder, self).default(o)
 
 
+class Setting(Enum):
+
+    driverPath = '/usr/bin/geckodriver'
+
+
 class House(abc.ABC):
 
     @abc.abstractmethod
@@ -122,8 +129,22 @@ class House(abc.ABC):
 
     def insert(self, data: dict) -> None:
         headers = {'content-type': 'application/json; charset=utf-8'}
-        resp = requests.post('http://localhost:8080/hourse', headers=headers, json=data)
-        assert resp.status_code == 204, resp.json()
+        retry = Retry(connect=3, backoff_factor=0.5)
+        adapter = HTTPAdapter(max_retries=retry)
+        session = requests.Session()
+        session.mount('http://', adapter)
+        try:
+            resp = session.post(
+                'http://localhost:8080/hourse',
+                headers=headers,
+                data=json.dumps(data, cls=DecimalEncoder))
+            assert resp.status_code == 204, resp.json()
+        except Exception as e:
+            print(e)
+            time.sleep(5)
+        finally:
+            resp.close()
+            session.close()
 
     def value(self, text: str) -> decimal.Decimal:
         count = ''
@@ -143,8 +164,3 @@ class House(abc.ABC):
             driver = webdriver.Firefox(service=service, options=options)
             self._driver = driver
             return self._driver
-
-
-class Setting(Enum):
-
-    driverPath = '/usr/bin/geckodriver'

@@ -3,10 +3,6 @@
 from enum import Enum
 import logging
 
-from selenium import webdriver
-from selenium.webdriver.firefox.service import Service
-from selenium.webdriver import FirefoxOptions
-
 from crawler import sale591, yungching, agent, sinyi
 
 
@@ -19,7 +15,7 @@ class Logging(Enum):
 
 
 logging.basicConfig(
-    # filename=Logging.filename.value,
+    filename=Logging.filename.value,
     level=Logging.level.value,
     format=Logging.format.value,
     datefmt=Logging.datefmt.value)

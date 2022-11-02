@@ -50,7 +50,7 @@ func convertToCreateHourseParams(
 
 func (service *Service) CreateHourse(ctx context.Context, in *CreateHourseRequest) error {
 	logger := log.WithContext(ctx)
-	logger.Info("start ...")
+
 	if err := service.validator.Struct(in); err != nil {
 		logger.Errorf("failed to validate body: %v", err)
 		return err
@@ -71,7 +71,6 @@ func (service *Service) CreateHourse(ctx context.Context, in *CreateHourseReques
 		return err
 	}
 
-	logger.Infof("start insert hourse: %v", request)
 	if err := service.rds.CreateHourse(ctx, request); err != nil {
 		logger.Errorf("failed to create hourse: %v", err)
 		return err
