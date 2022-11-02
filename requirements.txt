@@ -1,6 +1,4 @@
 autopep8==2.0.0
 beautifulsoup4==4.11.1
 bs4==0.0.1
-openpyxl==3.0.10
-pandas==1.5.1
 selenium==4.5.0

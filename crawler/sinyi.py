@@ -53,6 +53,7 @@ class Sinyi(House):
             result['price'] = self.value(result['price'])
             result['floor'] = result['floor'].replace('樓', 'F')
             result['section'] = result['address'][3:6]
+            result['city'] = result['address'][:3]
             result['address'] = result['address'][6:]
             if result['main_area']:
                 result['main_area'] = self.value(result['main_area'])

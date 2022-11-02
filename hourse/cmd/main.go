@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
-	"log"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,41 +11,60 @@ import (
 	"time"
 
 	"github.com/hourse"
+	hourseHTTP "github.com/hourse/http"
+	"github.com/hourse/log"
 	"github.com/hourse/postgres"
-	"github.com/hourse/route"
 	_ "github.com/lib/pq"
+	"github.com/spf13/viper"
 )
 
+func NewDatabaseConn() (*sql.DB, error) {
+	user := viper.GetString("service.postgres.user")
+	password := viper.GetString("service.postgres.password")
+	db := viper.GetString("service.postgres.db")
+	return sql.Open("postgres", fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", user, password, db))
+}
+
 func main() {
-	conn, err := sql.Open("postgres", "user=postgres password=postgres dbname=db sslmode=disable")
+	loger := log.WithContext(context.Background())
+	defer log.Close()
+
+	viper.SetConfigType("yaml")
+	viper.SetConfigFile("./config/setting.yaml")
+
+	if err := viper.ReadInConfig(); err != nil {
+		loger.Fatalln("cannot read config: %v", err)
+	}
+
+	conn, err := NewDatabaseConn()
 	if err != nil {
-		log.Fatalln(err)
+		loger.Fatalln(err)
 	}
 
 	db := postgres.New(conn)
 	service := hourse.NewService(db)
-	router := route.NewService(service)
-	handler := router.Handler()
-	srv := &http.Server{Addr: ":8080", Handler: handler}
+	server := hourseHTTP.NewServer(service)
+	handler := server.Handler()
+	srv := &http.Server{Addr: fmt.Sprintf(":%d", viper.GetInt("service.port")), Handler: handler}
 
-	log.Println("Start server")
+	loger.Info("Start server...")
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
+			loger.Fatalf("listen: %s\n", err)
 		}
 	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	log.Println("Shutdown Server ...")
+	loger.Info("Shutdown Server ...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("Server Shutdown: ", err)
+		loger.Fatal("Server Shutdown: ", err)
 	}
 
-	log.Println("Server exiting")
+	loger.Info("Server exiting")
 }

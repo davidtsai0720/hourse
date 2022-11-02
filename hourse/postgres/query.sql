@@ -1,13 +1,25 @@
 -- name: GetCities :many
 SELECT name FROM city;
 
--- name: GetSection :many
+-- name: GetSectionsByCity :many
 SELECT section.name
 FROM section
 LEFT JOIN city ON (section.city_id = city.id)
 WHERE city.name = @city_name;
 
--- name: GetHourse :many
+-- name: GetSectionsWithCity :many
+SELECT section.name AS section, city.name AS city
+FROM section
+LEFT JOIN city ON (section.city_id = city.id);
+
+-- name: GetSection :one
+SELECT *
+FROM section
+LEFT JOIN city ON (section.city_id = city.id)
+WHERE city.name = @city
+AND section.name = @section;
+
+-- name: GetHourses :many
 WITH duplicate_conditions AS (
     SELECT MIN(id) AS id, section_id, address, age, area
     FROM hourse
@@ -72,3 +84,14 @@ LEFT JOIN section ON (section.id=hourse.section_id)
 LEFT JOIN city ON (city.id=section.city_id)
 ORDER BY city.name, section.name, hourse.age, hourse.price, hourse.address
 OFFSET @offset_param :: INTEGER LIMIT @limit_param :: INTEGER;
+
+-- name: CreateHourse :exec
+INSERT INTO hourse (
+    section_id, link, layout, address, price, current_floor, total_floor,
+    shape, age, area, main_area, raw)
+VALUES (
+    @section_id, @link, @layout, @address, @price, @current_floor,
+    @total_floor, @shape, @age, @area, @main_area, @raw)
+ON CONFLICT (link)
+DO UPDATE
+SET updated_at = CURRENT_TIMESTAMP, price = EXCLUDED.price;

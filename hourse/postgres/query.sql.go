@@ -8,8 +8,54 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"time"
 )
+
+const createHourse = `-- name: CreateHourse :exec
+INSERT INTO hourse (
+    section_id, link, layout, address, price, current_floor, total_floor,
+    shape, age, area, main_area, raw)
+VALUES (
+    $1, $2, $3, $4, $5, $6,
+    $7, $8, $9, $10, $11, $12)
+ON CONFLICT (link)
+DO UPDATE
+SET updated_at = CURRENT_TIMESTAMP, price = EXCLUDED.price
+`
+
+type CreateHourseParams struct {
+	SectionID    int32
+	Link         string
+	Layout       sql.NullString
+	Address      string
+	Price        int32
+	CurrentFloor string
+	TotalFloor   string
+	Shape        string
+	Age          string
+	Area         string
+	MainArea     sql.NullString
+	Raw          json.RawMessage
+}
+
+func (q *Queries) CreateHourse(ctx context.Context, arg CreateHourseParams) error {
+	_, err := q.db.ExecContext(ctx, createHourse,
+		arg.SectionID,
+		arg.Link,
+		arg.Layout,
+		arg.Address,
+		arg.Price,
+		arg.CurrentFloor,
+		arg.TotalFloor,
+		arg.Shape,
+		arg.Age,
+		arg.Area,
+		arg.MainArea,
+		arg.Raw,
+	)
+	return err
+}
 
 const getCities = `-- name: GetCities :many
 SELECT name FROM city
@@ -38,7 +84,7 @@ func (q *Queries) GetCities(ctx context.Context) ([]string, error) {
 	return items, nil
 }
 
-const getHourse = `-- name: GetHourse :many
+const getHourses = `-- name: GetHourses :many
 WITH duplicate_conditions AS (
     SELECT MIN(id) AS id, section_id, address, age, area
     FROM hourse
@@ -105,7 +151,7 @@ ORDER BY city.name, section.name, hourse.age, hourse.price, hourse.address
 OFFSET $1 :: INTEGER LIMIT $2 :: INTEGER
 `
 
-type GetHourseParams struct {
+type GetHoursesParams struct {
 	OffsetParam      int32
 	LimitParam       int32
 	City             string
@@ -116,7 +162,7 @@ type GetHourseParams struct {
 	ExcludedTopFloor bool
 }
 
-type GetHourseRow struct {
+type GetHoursesRow struct {
 	ID           int64
 	Address      string
 	City         sql.NullString
@@ -135,8 +181,8 @@ type GetHourseRow struct {
 	TotalCount   int64
 }
 
-func (q *Queries) GetHourse(ctx context.Context, arg GetHourseParams) ([]GetHourseRow, error) {
-	rows, err := q.db.QueryContext(ctx, getHourse,
+func (q *Queries) GetHourses(ctx context.Context, arg GetHoursesParams) ([]GetHoursesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getHourses,
 		arg.OffsetParam,
 		arg.LimitParam,
 		arg.City,
@@ -150,9 +196,9 @@ func (q *Queries) GetHourse(ctx context.Context, arg GetHourseParams) ([]GetHour
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetHourseRow
+	var items []GetHoursesRow
 	for rows.Next() {
-		var i GetHourseRow
+		var i GetHoursesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Address,
@@ -184,15 +230,57 @@ func (q *Queries) GetHourse(ctx context.Context, arg GetHourseParams) ([]GetHour
 	return items, nil
 }
 
-const getSection = `-- name: GetSection :many
+const getSection = `-- name: GetSection :one
+SELECT section.id, city_id, section.name, section.created_at, section.deleted_at, city.id, city.name, city.created_at, city.deleted_at
+FROM section
+LEFT JOIN city ON (section.city_id = city.id)
+WHERE city.name = $1
+AND section.name = $2
+`
+
+type GetSectionParams struct {
+	City    string
+	Section string
+}
+
+type GetSectionRow struct {
+	ID          int64
+	CityID      int32
+	Name        string
+	CreatedAt   time.Time
+	DeletedAt   sql.NullTime
+	ID_2        sql.NullInt64
+	Name_2      sql.NullString
+	CreatedAt_2 sql.NullTime
+	DeletedAt_2 sql.NullTime
+}
+
+func (q *Queries) GetSection(ctx context.Context, arg GetSectionParams) (GetSectionRow, error) {
+	row := q.db.QueryRowContext(ctx, getSection, arg.City, arg.Section)
+	var i GetSectionRow
+	err := row.Scan(
+		&i.ID,
+		&i.CityID,
+		&i.Name,
+		&i.CreatedAt,
+		&i.DeletedAt,
+		&i.ID_2,
+		&i.Name_2,
+		&i.CreatedAt_2,
+		&i.DeletedAt_2,
+	)
+	return i, err
+}
+
+const getSectionsByCity = `-- name: GetSectionsByCity :many
 SELECT section.name
 FROM section
 LEFT JOIN city ON (section.city_id = city.id)
 WHERE city.name = $1
 `
 
-func (q *Queries) GetSection(ctx context.Context, cityName string) ([]string, error) {
-	rows, err := q.db.QueryContext(ctx, getSection, cityName)
+func (q *Queries) GetSectionsByCity(ctx context.Context, cityName string) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getSectionsByCity, cityName)
 	if err != nil {
 		return nil, err
 	}
@@ -204,6 +292,40 @@ func (q *Queries) GetSection(ctx context.Context, cityName string) ([]string, er
 			return nil, err
 		}
 		items = append(items, name)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getSectionsWithCity = `-- name: GetSectionsWithCity :many
+SELECT section.name AS section, city.name AS city
+FROM section
+LEFT JOIN city ON (section.city_id = city.id)
+`
+
+type GetSectionsWithCityRow struct {
+	Section string
+	City    sql.NullString
+}
+
+func (q *Queries) GetSectionsWithCity(ctx context.Context) ([]GetSectionsWithCityRow, error) {
+	rows, err := q.db.QueryContext(ctx, getSectionsWithCity)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetSectionsWithCityRow
+	for rows.Next() {
+		var i GetSectionsWithCityRow
+		if err := rows.Scan(&i.Section, &i.City); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

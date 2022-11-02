@@ -4,3 +4,4 @@ venv
 *.log
 output
 node_modules
+config

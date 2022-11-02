@@ -7,16 +7,16 @@ from .base import AbcParam
 class QueryParameter(Enum):
 
     Taipei = {
-        'min_price': 1000,
+        'min_price': 800,
         'max_price': 2600,
-        'area': 18,
+        'area': 15,
         'city': 'Taipei',
     }
 
     NewTaipei = {
         'min_price': 800,
-        'max_price': 2000,
-        'area': 18,
+        'max_price': 2600,
+        'area': 15,
         'city': 'NewTaipei',
     }
 

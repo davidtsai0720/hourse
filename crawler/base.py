@@ -2,7 +2,7 @@
 from collections import namedtuple
 from collections.abc import Iterator
 from enum import Enum
-import textwrap
+import json
 import abc
 import random
 import logging
@@ -10,10 +10,12 @@ import time
 import decimal
 
 from selenium import webdriver
+from selenium.webdriver.firefox.service import Service
+from selenium.webdriver import FirefoxOptions
 from selenium.webdriver.support.ui import WebDriverWait
 from bs4 import BeautifulSoup
+import requests
 
-from postgres.postgres import Postgres
 
 Node = namedtuple('Node', ('tag', 'class_name'))
 
@@ -61,33 +63,14 @@ class AbcParam(abc.ABC):
         self.total_count = num
 
 
-insert_syntax = textwrap.dedent('''
-INSERT INTO hourse
-(section_id, link, layout, address, price, current_floor, total_floor, shape, age, area, main_area, raw)
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-ON CONFLICT (link)
-DO UPDATE
-SET updated_at = CURRENT_TIMESTAMP, price = EXCLUDED.price;''')
-keys = (
-    'section_id',
-    'link',
-    'layout',
-    'address',
-    'price',
-    'current_floor',
-    'total_floor',
-    'shape',
-    'age',
-    'area',
-    'main_area',
-    'raw')
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, decimal.Decimal):
+            return str(o)
+        return super(DecimalEncoder, self).default(o)
 
 
 class House(abc.ABC):
-
-    def __init__(self, driver: webdriver.Firefox) -> None:
-        self.driver = driver
-        self.section: dict = {}
 
     @abc.abstractmethod
     def get_current_url(self, param: AbcParam) -> str:
@@ -107,15 +90,18 @@ class House(abc.ABC):
 
     def run(self, param: AbcParam):
         method = self.get_method()
+
         while param.alive():
             current_url = self.get_current_url(param=param)
-            self.driver.get(url=current_url)
-            logging.info(current_url)
-
             try:
+                self.driver.get(url=current_url)
+                logging.info(current_url)
                 WebDriverWait(self.driver, 10).until(method)
             except Exception as e:
                 logging.error(e)
+                self.driver.close()
+                self.driver.quit()
+                del self._driver
 
             soup = BeautifulSoup(self.driver.page_source, 'html.parser')
             for result in self.fetchone(soup=soup):
@@ -131,23 +117,13 @@ class House(abc.ABC):
             param.set_next()
             time.sleep(random.uniform(5, 9))
 
-    def section_id(self, section: str) -> int:
-        try:
-            return self.section[section]
-        except Exception:
-            record = Postgres.fetchone('SELECT id FROM section WHERE name = %s', (section, ))
-            self.section[section] = record[0]
-            return self.section[section]
+        self.driver.close()
+        self.driver.quit()
 
-    def insert(self, mymap: dict) -> None:
-        data = []
-        mymap['current_floor'], mymap['total_floor'] = mymap['floor'].split('/')
-        for key in keys:
-            value = mymap[key] if key != 'section_id' else self.section_id(mymap['section'])
-            if not mymap['main_area']:
-                mymap['main_area'] = None
-            data.append(value)
-        Postgres.execute(syntax=insert_syntax, param=data)
+    def insert(self, data: dict) -> None:
+        headers = {'content-type': 'application/json; charset=utf-8'}
+        resp = requests.post('http://localhost:8080/hourse', headers=headers, json=data)
+        assert resp.status_code == 204, resp.json()
 
     def value(self, text: str) -> decimal.Decimal:
         count = ''
@@ -155,3 +131,20 @@ class House(abc.ABC):
             if char.isdigit() or char == '.':
                 count += char
         return decimal.Decimal(count)
+
+    @property
+    def driver(self):
+        try:
+            return self._driver
+        except AttributeError:
+            options = FirefoxOptions()
+            options.headless = True
+            service = Service(Setting.driverPath.value)
+            driver = webdriver.Firefox(service=service, options=options)
+            self._driver = driver
+            return self._driver
+
+
+class Setting(Enum):
+
+    driverPath = '/usr/bin/geckodriver'

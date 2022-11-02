@@ -55,6 +55,7 @@ class YungChing(House):
             result['raw'] = json.dumps(result)
             result['link'] = 'https://buy.yungching.com.tw' + result['link']
             result['section'] = result['address'][3:6]
+            result['city'] = result['address'][:3]
             if result['main_area']:
                 result['main_area'] = self.value(result['main_area'])
 

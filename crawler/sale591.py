@@ -18,7 +18,6 @@ class Param(AbcParam):
         self.kind: int = param['kind']
         self.price: str = param['price']
         self.area: str = param['area']
-        self.age: str = param['houseage']
         self.page = 1
         if 'section' in param:
             self.section: str = param['section']
@@ -33,7 +32,6 @@ class Param(AbcParam):
             'kind': self.kind,
             'price': self.price,
             'area': self.area,
-            'houseage': self.age,
             'firstRow': self.page * Item.PageSize.value,
         }
 
@@ -91,7 +89,7 @@ class Sale591(House):
             result['raw'] = json.dumps(result)
             result['section'] = result['section'][:-1]
             result['link'] = 'https://sale.591.com.tw' + result['link']
-
+            result['city'] = self.city
             if result['main_area']:
                 result['main_area'] = self.value(result['main_area'])
 
@@ -111,6 +109,11 @@ class Sale591(House):
 
     def run(self, mymap: dict) -> None:
         param = Param(mymap)
+        self.city = ''
+        if mymap['regionid'] == 1:
+            self.city = '台北市'
+        elif mymap['regionid'] == 3:
+            self.city = '新北市'
         super().run(param=param)
 
 
@@ -119,17 +122,13 @@ class Query(Enum):
     Taipei = {
         'regionid': 1,
         'kind': 9,
-        'price': '1000$_2600$',
-        'area': '18$_$',
-        'houseage': '25$_45$',
-        'dest': '591Taipei.json'
+        'price': '800$_2600$',
+        'area': '15$_$',
     }
 
     NewTaipei = {
         'regionid': 3,
         'kind': 9,
-        'price': '800$_2000$',
-        'area': '25$_$',
-        'houseage': '$_30$',
-        'dest': '591NewTaipei.json',
+        'price': '800$2600$',
+        'area': '15$_$',
     }
