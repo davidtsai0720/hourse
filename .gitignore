@@ -5,3 +5,7 @@ venv
 output
 node_modules
 config
+.env
+gocache
+gomodcache
+postgresdata
