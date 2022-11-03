@@ -22,7 +22,11 @@ func NewDatabaseConn() (*sql.DB, error) {
 	user := viper.GetString("service.postgres.user")
 	password := viper.GetString("service.postgres.password")
 	db := viper.GetString("service.postgres.db")
-	return sql.Open("postgres", fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", user, password, db))
+	host := viper.GetString("service.postgres.host")
+	port := viper.GetInt("service.postgres.port")
+	return sql.Open("postgres", fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		host, port, user, password, db))
 }
 
 func main() {
@@ -47,8 +51,8 @@ func main() {
 	handler := server.Handler()
 	srv := &http.Server{Addr: fmt.Sprintf(":%d", viper.GetInt("service.port")), Handler: handler}
 
-	loger.Info("Start server...")
 	go func() {
+		loger.Info("Start Listen...")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			loger.Fatalf("listen: %s\n", err)
 		}

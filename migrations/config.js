@@ -5,7 +5,7 @@ const local = {
         user: 'postgres',
         password: 'postgres',
         port: 5432,
-        database: 'db',
+        database: 'hourse',
     },
         seeds: {
         directory: './seeds/local'

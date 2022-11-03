@@ -19,6 +19,9 @@ exports.up = function(knex, Promise) {
             table.timestamp('deleted_at')
             table.foreign('section_id').references('id').inTable('section').onUpdate('CASCADE').onDelete('CASCADE')
             table.unique('link')
+            table.index('age')
+            table.index('main_area')
+            table.index('price')
         })
 };
 
