@@ -1,0 +1,57 @@
+version: '3.7'
+
+services:
+
+  frontend:
+    image: nginx:1.23.2-alpine
+    container_name: frontend
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./html:/var/www/html
+    ports:
+      - "80:80"
+    depends_on:
+      - restful
+    networks:
+      - backend
+
+  restful:
+    image: golang:1.18-alpine
+    container_name: restful
+    working_dir: /server
+    command: go run cmd/main.go
+    expose:
+      - ${SERVICE_PORT}
+    ports:
+      - ${SERVICE_PORT}:${SERVICE_PORT}
+    volumes:
+      - ./hourse:/server
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_HOST=database
+      - SERVICE_PORT=${SERVICE_PORT}
+    depends_on:
+      - database
+    networks:
+      - backend
+
+  database:
+    image: postgres:15.0-alpine
+    container_name: postgres
+    volumes:
+      - ./postgresdata:/var/lib/postgresql/data
+    expose:
+      - ${POSTGRES_PORT}
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge

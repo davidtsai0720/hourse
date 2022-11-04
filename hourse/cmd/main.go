@@ -19,13 +19,20 @@ import (
 )
 
 func NewDatabaseConn() (*sql.DB, error) {
-	user := viper.GetString("service.postgres.user")
-	password := viper.GetString("service.postgres.password")
-	db := viper.GetString("service.postgres.db")
-	host := viper.GetString("service.postgres.host")
-	port := viper.GetInt("service.postgres.port")
+	// user := viper.GetString("service.postgres.user")
+	// password := viper.GetString("service.postgres.password")
+	// db := viper.GetString("service.postgres.db")
+	// host := viper.GetString("service.postgres.host")
+	// port := viper.GetInt("service.postgres.port")
+
+	user := os.Getenv("POSTGRES_USER")
+	password := os.Getenv("POSTGRES_PASSWORD")
+	db := os.Getenv("POSTGRES_DB")
+	port := os.Getenv("POSTGRES_PORT")
+	host := os.Getenv("POSTGRES_HOST")
+
 	return sql.Open("postgres", fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, db))
 }
 
@@ -49,7 +56,7 @@ func main() {
 	service := hourse.NewService(db)
 	server := hourseHTTP.NewServer(service)
 	handler := server.Handler()
-	srv := &http.Server{Addr: fmt.Sprintf(":%d", viper.GetInt("service.port")), Handler: handler}
+	srv := &http.Server{Addr: fmt.Sprintf(":%s", os.Getenv("SERVICE_PORT")), Handler: handler}
 
 	go func() {
 		loger.Info("Start Listen...")

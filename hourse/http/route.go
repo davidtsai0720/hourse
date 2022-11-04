@@ -30,10 +30,12 @@ type Server struct {
 }
 
 func (server *Server) Handler() http.Handler {
-	server.router.Get("/city", server.HandleGetCities())
-	server.router.Get("/section/{name}", server.HandleGetSectionsByCity())
-	server.router.Get("/sections", server.HandleGetSectionsWithCity())
-	server.router.Get("/hourse", server.HandleGetHourses())
-	server.router.Post("/hourse", server.HandleCreateHourse())
+	server.router.Route("/api", func(r chi.Router) {
+		r.Get("/city", server.HandleGetCities())
+		r.Get("/section/{name}", server.HandleGetSectionsByCity())
+		r.Get("/sections", server.HandleGetSectionsWithCity())
+		r.Get("/hourse", server.HandleGetHourses())
+		r.Post("/hourse", server.HandleCreateHourse())
+	})
 	return server.router
 }
