@@ -57,10 +57,12 @@ candidates AS (
     AND (hourse.shape IN (@shape) OR COALESCE(@shape, '') = '')
     AND (
         CASE
-        WHEN @excluded_top_floor :: BOOLEAN THEN hourse.current_floor != hourse.total_floor
+        WHEN hourse.shape = '公寓' THEN hourse.current_floor = '3F'
         ELSE TRUE
         END
     )
+    AND hourse.current_floor != hourse.total_floor
+    AND hourse.current_floor NOT IN ('-1F', 'B1F', 'B1', '頂樓加蓋')
 )
 SELECT
     hourse.id,
@@ -83,7 +85,7 @@ FROM hourse
 INNER JOIN candidates USING(id)
 LEFT JOIN section ON (section.id=hourse.section_id)
 LEFT JOIN city ON (city.id=section.city_id)
-ORDER BY city.name, section.name, hourse.age, hourse.price, hourse.address;
+ORDER BY hourse.age, hourse.price, hourse.main_area;
 -- OFFSET @offset_param :: INTEGER LIMIT @limit_param :: INTEGER;
 
 -- name: CreateHourse :exec

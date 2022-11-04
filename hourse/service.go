@@ -83,10 +83,10 @@ func convertToGetHoursesParams(in *GetHoursesRequest) postgres.GetHoursesParams 
 	request := postgres.GetHoursesParams{
 		// OffsetParam:      int32(in.Page * in.PageSize),
 		// LimitParam:       in.PageSize,
-		MaxPrice:         int32(in.MaxPrice),
-		MinMainArea:      in.MinMainArea.String(),
-		ExcludedTopFloor: in.ExcludedTopFloor,
-		Age:              in.Age,
+		MaxPrice:    int32(in.MaxPrice),
+		MinMainArea: in.MinMainArea.String(),
+		// ExcludedTopFloor: in.ExcludedTopFloor,
+		Age: in.Age,
 	}
 
 	if len(in.City) != 0 {

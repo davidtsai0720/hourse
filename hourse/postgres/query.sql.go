@@ -124,10 +124,12 @@ candidates AS (
     AND (hourse.shape IN ($6) OR COALESCE($6, '') = '')
     AND (
         CASE
-        WHEN $7 :: BOOLEAN THEN hourse.current_floor != hourse.total_floor
+        WHEN hourse.shape = '公寓' THEN hourse.current_floor = '3F'
         ELSE TRUE
         END
     )
+    AND hourse.current_floor != hourse.total_floor
+    AND hourse.current_floor NOT IN ('-1F', 'B1F', 'B1', '頂樓加蓋')
 )
 SELECT
     hourse.id,
@@ -150,17 +152,16 @@ FROM hourse
 INNER JOIN candidates USING(id)
 LEFT JOIN section ON (section.id=hourse.section_id)
 LEFT JOIN city ON (city.id=section.city_id)
-ORDER BY city.name, section.name, hourse.age, hourse.price, hourse.address
+ORDER BY hourse.age, hourse.price, hourse.main_area
 `
 
 type GetHoursesParams struct {
-	City             string
-	Section          string
-	MaxPrice         interface{}
-	Age              string
-	MinMainArea      interface{}
-	Shape            string
-	ExcludedTopFloor bool
+	City        string
+	Section     string
+	MaxPrice    interface{}
+	Age         string
+	MinMainArea interface{}
+	Shape       string
 }
 
 type GetHoursesRow struct {
@@ -190,7 +191,6 @@ func (q *Queries) GetHourses(ctx context.Context, arg GetHoursesParams) ([]GetHo
 		arg.Age,
 		arg.MinMainArea,
 		arg.Shape,
-		arg.ExcludedTopFloor,
 	)
 	if err != nil {
 		return nil, err

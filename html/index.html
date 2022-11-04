@@ -34,26 +34,31 @@
     }
 
     const handleTalbe = (results) => {
-            const table = document.querySelector('table[name="table"]')
-            let tableContent = tableHead
-            results.forEach(item => {
-                tableContent += `
-                <tr>
-                    <td> <a href=https://www.google.com/search?q=${item.address} target="_blank">${item.address}</a> </td>
-                    <td>${Math.ceil(item.price)} 萬</td>
-                    <td>${item.floor}</td>
-                    <td>${item.shape}</td>
-                    <td>${item.age}</td>
-                    <td>${item.main_area}</td>
-                    <td>${item.area}</td>
-                    <td>${item.section}</td>
-                    <td> <a href=${item.link} target="_blank">Link</a> </td>
-                    <td>${item.commit}</td>
-                </tr>`
-            })
-
+        const table = document.querySelector('table[name="table"]')
+        let tableContent = tableHead
+        if (results === null) {
             table.innerHTML = tableContent
+            return;
         }
+
+        results.forEach(item => {
+            tableContent += `
+            <tr>
+                <td> <a href=https://www.google.com/search?q=${item.address} target="_blank">${item.address}</a> </td>
+                <td>${Math.ceil(item.price)} 萬</td>
+                <td>${item.floor}</td>
+                <td>${item.shape}</td>
+                <td>${item.age}</td>
+                <td>${item.main_area}</td>
+                <td>${item.area}</td>
+                <td>${item.section}</td>
+                <td> <a href=${item.link} target="_blank">Link</a> </td>
+                <td>${item.commit}</td>
+            </tr>`
+        })
+
+        table.innerHTML = tableContent
+    }
 
 
     const handleSubmit = () => {
