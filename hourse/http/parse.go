@@ -70,13 +70,5 @@ func parseGetHoursesRequest(r *http.Request) (*hourse.GetHoursesRequest, error) 
 
 	result.Age = strings.TrimSpace(r.URL.Query().Get("age"))
 
-	// if result.Page <= 1 {
-	// 	result.Page = viper.GetInt("service.min_page")
-	// }
-
-	// if result.PageSize <= 0 {
-	// 	result.PageSize = viper.GetInt("service.page_size")
-	// }
-
 	return result, nil
 }

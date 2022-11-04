@@ -15,16 +15,9 @@ import (
 	"github.com/hourse/log"
 	"github.com/hourse/postgres"
 	_ "github.com/lib/pq"
-	"github.com/spf13/viper"
 )
 
 func NewDatabaseConn() (*sql.DB, error) {
-	// user := viper.GetString("service.postgres.user")
-	// password := viper.GetString("service.postgres.password")
-	// db := viper.GetString("service.postgres.db")
-	// host := viper.GetString("service.postgres.host")
-	// port := viper.GetInt("service.postgres.port")
-
 	user := os.Getenv("POSTGRES_USER")
 	password := os.Getenv("POSTGRES_PASSWORD")
 	db := os.Getenv("POSTGRES_DB")
@@ -39,13 +32,6 @@ func NewDatabaseConn() (*sql.DB, error) {
 func main() {
 	loger := log.WithContext(context.Background())
 	defer log.Close()
-
-	viper.SetConfigType("yaml")
-	viper.SetConfigFile("./config/setting.yaml")
-
-	if err := viper.ReadInConfig(); err != nil {
-		loger.Fatalln("cannot read config: %v", err)
-	}
 
 	conn, err := NewDatabaseConn()
 	if err != nil {

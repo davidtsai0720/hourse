@@ -143,6 +143,7 @@ SELECT
     hourse.age,
     hourse.main_area,
     hourse.area,
+    hourse.layout,
     section.name AS section,
     hourse.link,
     COALESCE(hourse.commit, '') AS commit,
@@ -176,6 +177,7 @@ type GetHoursesRow struct {
 	Age          string
 	MainArea     sql.NullString
 	Area         string
+	Layout       sql.NullString
 	Section_2    sql.NullString
 	Link         string
 	Commit       string
@@ -211,6 +213,7 @@ func (q *Queries) GetHourses(ctx context.Context, arg GetHoursesParams) ([]GetHo
 			&i.Age,
 			&i.MainArea,
 			&i.Area,
+			&i.Layout,
 			&i.Section_2,
 			&i.Link,
 			&i.Commit,

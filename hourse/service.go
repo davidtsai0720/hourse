@@ -119,6 +119,7 @@ func convertToGetHourseResponse(in postgres.GetHoursesRow) GetHourseResponse {
 		Area:      in.Area,
 		Commit:    in.Commit,
 		CreatedAt: in.CreatedAt,
+		Layout:    in.Layout.String,
 	}
 }
 

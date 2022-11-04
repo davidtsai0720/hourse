@@ -76,6 +76,7 @@ SELECT
     hourse.age,
     hourse.main_area,
     hourse.area,
+    hourse.layout,
     section.name AS section,
     hourse.link,
     COALESCE(hourse.commit, '') AS commit,

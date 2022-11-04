@@ -44,6 +44,7 @@ type GetHourseResponse struct {
 	Shape     string    `json:"shape"`
 	Age       string    `json:"age"`
 	MainArea  string    `json:"main_area"`
+	Layout    string    `json:"layout"`
 	Area      string    `json:"area"`
 	Commit    string    `json:"commit"`
 	CreatedAt time.Time `json:"created_at"`
