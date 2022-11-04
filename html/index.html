@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Index</title>
+</head>
+<script>
+    const tableHead = `<tr>
+        <th>地址</th><th>價格</th><th>樓層</th><th>種類</th>
+        <th>屋齡</th><th>室內坪數</th><th>總坪數</th>
+        <th>地區</th><th>連結</th><th>註解</th></tr>`
+    const URL = 'http://192.168.252.128:8000'
+    const handleSection = () => {
+        const city = document.getElementById('city')
+        const section = document.getElementById('section')
+        const value = city.options[city.selectedIndex].value
+        fetch(`${URL}/section/${value}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(resp => resp.json())
+        .then(results => {
+            let content = '<option value="-">-</option>'
+            results.section.forEach(element => {
+                content += `<option value="${element}">${element}</option>`
+            })
+
+            section.innerHTML = content
+        })
+    }
+
+    const handleTalbe = (results) => {
+            const table = document.querySelector('table[name="table"]')
+            let tableContent = tableHead
+            results.forEach(item => {
+                tableContent += `
+                <tr>
+                    <td> <a href=https://www.google.com/search?q=${item.address} target="_blank">${item.address}</a> </td>
+                    <td>${Math.ceil(item.price)} 萬</td>
+                    <td>${item.floor}</td>
+                    <td>${item.shape}</td>
+                    <td>${item.age}</td>
+                    <td>${item.main_area}</td>
+                    <td>${item.area}</td>
+                    <td>${item.section}</td>
+                    <td> <a href=${item.link} target="_blank">Link</a> </td>
+                    <td>${item.commit}</td>
+                </tr>`
+            })
+
+            table.innerHTML = tableContent
+        }
+
+
+    const handleSubmit = () => {
+        const city = document.getElementById('city')
+        const section = document.getElementById('section')
+        const price = document.getElementById('price')
+        const mainArea= document.getElementById('mainArea')
+        const age = document.getElementById('age')
+        const data = {
+            city: city.options[city.selectedIndex].value,
+            section: section.selectedIndex === -1? null: section.options[section.selectedIndex].value,
+            max_price: price === null? null: price.value,
+            min_main_area: mainArea === null? null: mainArea.value,
+            age : age === null? null: age.value
+        }
+
+        let query = []
+        if (data.city != '-') {
+            query.push(`city=${data.city}`)
+        }
+
+        if (data.section !== null && data.section != '-') {
+            query.push(`section=${data.section}`)
+        }
+
+        if (data.max_price !== null) {
+            query.push(`max_price=${data.max_price}`)
+        }
+
+        if (data.min_main_area !== null) {
+            query.push(`min_main_area=${data.min_main_area}`)
+        }
+
+        if (data.age !== null) {
+            query.push(`age=${data.age}`)
+        }
+
+        fetch(`${URL}/hourse?${query.join('&')}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(resp => resp.json())
+        .then(result => handleTalbe(result))
+    }
+
+    window.onload = () => {
+        
+        const city = document.getElementById('city')
+        // fetch(`${URL}/hourse`, {
+        //     method: 'GET',
+        //     headers: {
+        //         'Content-Type': 'application/json',
+        //     },
+        // })
+        // .then((resp) => resp.json())
+        // .then((results) => handleTalbe(results))
+
+        fetch(`${URL}/city`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then((resp) => resp.json())
+        .then(results => {
+            let content = '<option value="-">-</option>'
+            results.city.forEach(element => {
+                content += `<option value="${element}">${element}</option>`
+            })
+
+            city.innerHTML = content
+        })
+    }
+</script>
+<body>
+    <div style="width:80%;text-align:left;margin:auto;margin-top:20px;margin-bottom: 20px;">
+        <div style="width:calc(100%/6);float:left;">
+            <label for="city">城市:</label>
+            <select name="city" id="city" onchange="handleSection()"></select>
+        </div>
+        <div style="width:calc(100%/6);float:left;">
+            <label for="section">地區:</label>
+            <select name="section" id="section"></select>
+        </div>
+        <div style="width:calc(100%/6);float:left;">
+            <label for="price">價格:</label>
+            <textarea id="price" name="price" rows="1" cols="8" style="resize:none;"></textarea>
+        </div>
+
+        <div style="width:calc(100%/6);float:left;">
+            <label for="mainArea">坪數:</label>
+            <textarea id="mainArea" name="mainArea" rows="1" cols="8" style="resize:none;"></textarea>
+        </div>
+        <div style="width:calc(100%/6);float:left;">
+            <label for="age">屋齡:</label>
+            <textarea id="age" name="age" rows="1" cols="8" style="resize:none;"></textarea>
+        </div>
+        <div style="width:calc(100%/6);float:left;"><input type="submit" value="Submit" onclick="handleSubmit()">
+        </div>
+    </div>
+    <div style="clear:both"></div>
+    <table name="table" style="width:80%;text-align:left;margin:auto;margin-top:20px;"></table>
+    <div style="clear:both"></div>
+    <div name="page"></div>
+</body>
+</html>

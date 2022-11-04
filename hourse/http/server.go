@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -67,12 +68,14 @@ func (server *Server) HandleGetHourses() http.HandlerFunc {
 			return
 		}
 
-		resp, err := server.service.GetHourses(r.Context(), body)
+		totalCount, resp, err := server.service.GetHourses(r.Context(), body)
 		if err != nil {
 			responseError(w, err, http.StatusInternalServerError)
 			return
 		}
 
+		w.Header().Add("total-count", strconv.Itoa(int(totalCount)))
+		w.Header().Add("page-size", strconv.Itoa(body.PageSize))
 		response(w, resp, http.StatusOK)
 	}
 }

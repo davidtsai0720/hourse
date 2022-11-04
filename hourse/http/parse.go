@@ -7,7 +7,6 @@ import (
 
 	"github.com/hourse"
 	"github.com/shopspring/decimal"
-	"github.com/spf13/viper"
 )
 
 func parseGetHoursesRequest(r *http.Request) (*hourse.GetHoursesRequest, error) {
@@ -21,7 +20,7 @@ func parseGetHoursesRequest(r *http.Request) (*hourse.GetHoursesRequest, error) 
 
 	section := strings.TrimSpace(r.URL.Query().Get("section"))
 	if section != "" {
-		result.Section = strings.Split(section, "")
+		result.Section = strings.Split(section, ",")
 	}
 
 	page := strings.TrimSpace(r.URL.Query().Get("page"))
@@ -69,13 +68,15 @@ func parseGetHoursesRequest(r *http.Request) (*hourse.GetHoursesRequest, error) 
 		}
 	}
 
-	if result.Page <= 1 {
-		result.Page = viper.GetInt("service.min_page")
-	}
+	result.Age = strings.TrimSpace(r.URL.Query().Get("age"))
 
-	if result.PageSize <= 0 {
-		result.PageSize = viper.GetInt("service.page_size")
-	}
+	// if result.Page <= 1 {
+	// 	result.Page = viper.GetInt("service.min_page")
+	// }
+
+	// if result.PageSize <= 0 {
+	// 	result.PageSize = viper.GetInt("service.page_size")
+	// }
 
 	return result, nil
 }

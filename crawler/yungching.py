@@ -62,7 +62,7 @@ class YungChing(House):
             if result['area']:
                 result['area'] = self.value(result['area'])
 
-            result['price'] = int(self.value(result['price'].replace(',', '')))
+            result['price'] = self.value(result['price'].replace(',', ''))
             result['address'] = result['address'][6:]
             result['layout'] = result['room']
 

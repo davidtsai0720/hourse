@@ -138,7 +138,7 @@ class House(abc.ABC):
                 'http://localhost:8080/hourse',
                 headers=headers,
                 data=json.dumps(data, cls=DecimalEncoder))
-            assert resp.status_code == 204, resp.json()
+            assert resp.status_code == 204, f'response: {resp.json()}, body: {data}'
         except Exception as e:
             print(e)
             time.sleep(5)

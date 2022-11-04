@@ -22,21 +22,26 @@ logging.basicConfig(
 
 
 def exec_crawler() -> None:
-    try:
-        sale = sale591.Sale591()
-        for param in sale591.Query:
+    # yc = yungching.YungChing()
+    # for param in agent.QueryParameter:
+    #     try:
+    #         yc.run(param.value)
+    #     except Exception as e:
+    #         logging.error(e)
+
+    # sy = sinyi.Sinyi()
+    # for param in agent.QueryParameter:
+    #     try:
+    #         sy.run(param.value)
+    #     except Exception as e:
+    #         logging.error(e)
+
+    sale = sale591.Sale591()
+    for param in sale591.Query:
+        try:
             sale.run(param.value)
-
-        yc = yungching.YungChing()
-        for param in agent.QueryParameter:
-            yc.run(param.value)
-
-        sy = sinyi.Sinyi()
-        for param in agent.QueryParameter:
-            sy.run(param.value)
-
-    except Exception as e:
-        logging.error(e)
+        except Exception as e:
+            logging.error(e)
 
 
 if __name__ == '__main__':

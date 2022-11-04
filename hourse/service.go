@@ -35,8 +35,8 @@ func convertToCreateHourseParams(
 		SectionID:    int32(section.ID),
 		Link:         in.Link,
 		Layout:       sql.NullString{String: in.Layout, Valid: in.Layout != ""},
-		Address:      in.Address,
-		Price:        int32(in.Price),
+		Address:      sql.NullString{String: in.Address, Valid: in.Address != ""},
+		Price:        in.Price,
 		CurrentFloor: floors[0],
 		TotalFloor:   floors[1],
 		Shape:        in.Shape,
@@ -52,7 +52,7 @@ func (service *Service) CreateHourse(ctx context.Context, in *CreateHourseReques
 	logger := log.WithContext(ctx)
 
 	if err := service.validator.Struct(in); err != nil {
-		logger.Errorf("failed to validate body: %v", err)
+		logger.Errorf("failed to validate body: %v", in)
 		return err
 	}
 
@@ -81,11 +81,12 @@ func (service *Service) CreateHourse(ctx context.Context, in *CreateHourseReques
 
 func convertToGetHoursesParams(in *GetHoursesRequest) postgres.GetHoursesParams {
 	request := postgres.GetHoursesParams{
-		OffsetParam:      int32(in.Page * in.PageSize),
-		LimitParam:       int32(in.PageSize),
+		// OffsetParam:      int32(in.Page * in.PageSize),
+		// LimitParam:       in.PageSize,
 		MaxPrice:         int32(in.MaxPrice),
 		MinMainArea:      in.MinMainArea.String(),
 		ExcludedTopFloor: in.ExcludedTopFloor,
+		Age:              in.Age,
 	}
 
 	if len(in.City) != 0 {
@@ -110,7 +111,7 @@ func convertToGetHourseResponse(in postgres.GetHoursesRow) GetHourseResponse {
 		City:      in.City.String,
 		Section:   in.Section.String,
 		Address:   in.Address,
-		Price:     int(in.Price),
+		Price:     in.Price,
 		Floor:     in.Floor,
 		Shape:     in.Shape,
 		Age:       in.Age,
@@ -121,13 +122,17 @@ func convertToGetHourseResponse(in postgres.GetHoursesRow) GetHourseResponse {
 	}
 }
 
-func (service *Service) GetHourses(ctx context.Context, in *GetHoursesRequest) ([]GetHourseResponse, error) {
+func (service *Service) GetHourses(ctx context.Context, in *GetHoursesRequest) (int64, []GetHourseResponse, error) {
 	logger := log.WithContext(ctx)
 
 	results, err := service.rds.GetHourses(ctx, convertToGetHoursesParams(in))
 	if err != nil {
 		logger.Errorf("failed to get hourse: %v", err)
-		return nil, err
+		return 0, nil, err
+	}
+
+	if len(results) == 0 {
+		return 0, nil, nil
 	}
 
 	output := make([]GetHourseResponse, 0, len(results))
@@ -135,7 +140,7 @@ func (service *Service) GetHourses(ctx context.Context, in *GetHoursesRequest) (
 		output = append(output, convertToGetHourseResponse(result))
 	}
 
-	return output, nil
+	return results[0].TotalCount, output, nil
 }
 
 func (service *Service) GetCities(ctx context.Context) (*GetCitiesResponse, error) {

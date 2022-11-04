@@ -22,8 +22,8 @@ type Hourse struct {
 	SectionID    int32
 	Link         string
 	Layout       sql.NullString
-	Address      string
-	Price        int32
+	Address      sql.NullString
+	Price        string
 	CurrentFloor string
 	TotalFloor   string
 	Shape        string

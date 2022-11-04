@@ -97,7 +97,7 @@ class Sale591(House):
                 result['area'] = self.value(result['area'])
 
             if result['price']:
-                result['price'] = int(self.value(result['price'].split('  ')[-1]))
+                result['price'] = self.value(result['price'].split('  ')[-1])
             yield result
 
     def get_current_url(self, param: AbcParam) -> str:
@@ -119,16 +119,16 @@ class Sale591(House):
 
 class Query(Enum):
 
-    Taipei = {
-        'regionid': 1,
-        'kind': 9,
-        'price': '800$_2600$',
-        'area': '15$_$',
-    }
+    # Taipei = {
+    #     'regionid': 1,
+    #     'kind': 9,
+    #     'price': '800$_2600$',
+    #     'area': '15$_$',
+    # }
 
     NewTaipei = {
         'regionid': 3,
         'kind': 9,
-        'price': '800$2600$',
+        'price': '800$_2600$',
         'area': '15$_$',
     }

@@ -13,6 +13,7 @@ import (
 )
 
 const createHourse = `-- name: CreateHourse :exec
+
 INSERT INTO hourse (
     section_id, link, layout, address, price, current_floor, total_floor,
     shape, age, area, main_area, raw)
@@ -28,8 +29,8 @@ type CreateHourseParams struct {
 	SectionID    int32
 	Link         string
 	Layout       sql.NullString
-	Address      string
-	Price        int32
+	Address      sql.NullString
+	Price        string
 	CurrentFloor string
 	TotalFloor   string
 	Shape        string
@@ -39,6 +40,7 @@ type CreateHourseParams struct {
 	Raw          json.RawMessage
 }
 
+// OFFSET @offset_param :: INTEGER LIMIT @limit_param :: INTEGER;
 func (q *Queries) CreateHourse(ctx context.Context, arg CreateHourseParams) error {
 	_, err := q.db.ExecContext(ctx, createHourse,
 		arg.SectionID,
@@ -89,7 +91,7 @@ WITH duplicate_conditions AS (
     SELECT MIN(id) AS id, section_id, address, age, area
     FROM hourse
     WHERE link LIKE 'https://sale.591.com.tw/home%'
-    AND updated_at > CURRENT_TIMESTAMP - INTERVAL '1 day'
+    AND updated_at > CURRENT_TIMESTAMP - INTERVAL '7 day'
     GROUP BY section_id, address, age, area
     HAVING count(1) > 1
 ),
@@ -104,24 +106,25 @@ duplicate AS (
         AND hourse.link LIKE 'https://sale.591.com.tw/home%'
     )
     WHERE hourse.id NOT IN (SELECT id FROM duplicate_conditions)
-    AND hourse.updated_at > CURRENT_TIMESTAMP - INTERVAL '1 day'
+    AND hourse.updated_at > CURRENT_TIMESTAMP - INTERVAL '7 day'
 ),
 candidates AS (
     SELECT hourse.id
     FROM hourse
     LEFT JOIN section ON (section.id=hourse.section_id)
     LEFT JOIN city ON (city.id=section.city_id)
-    WHERE hourse.updated_at > CURRENT_TIMESTAMP - INTERVAL '1 day'
+    WHERE hourse.updated_at > CURRENT_TIMESTAMP - INTERVAL '7 day'
     AND hourse.id NOT IN (SELECT id FROM duplicate)
     AND hourse.main_area IS NOT NULL
-    AND (city.name IN ($3) OR COALESCE($3, '') = '')
-    AND (section.name IN ($4) OR COALESCE($4, '') = '')
-    AND ($5 = 0 OR hourse.price < $5)
-    AND ($6 = 0 OR hourse.main_area > $6 :: DECIMAL)
-    AND (hourse.shape IN ($7) OR COALESCE($7, '') = '')
+    AND (city.name IN ($1) OR COALESCE($1, '') = '')
+    AND (section.name IN ($2) OR COALESCE($2, '') = '')
+    AND ($3 = 0 OR hourse.price < $3)
+    AND (hourse.age < $4 OR COALESCE($4, '') = '')
+    AND ($5 = 0 OR hourse.main_area > $5 :: DECIMAL)
+    AND (hourse.shape IN ($6) OR COALESCE($6, '') = '')
     AND (
         CASE
-        WHEN $8 :: BOOLEAN THEN hourse.current_floor != hourse.total_floor
+        WHEN $7 :: BOOLEAN THEN hourse.current_floor != hourse.total_floor
         ELSE TRUE
         END
     )
@@ -148,15 +151,13 @@ INNER JOIN candidates USING(id)
 LEFT JOIN section ON (section.id=hourse.section_id)
 LEFT JOIN city ON (city.id=section.city_id)
 ORDER BY city.name, section.name, hourse.age, hourse.price, hourse.address
-OFFSET $1 :: INTEGER LIMIT $2 :: INTEGER
 `
 
 type GetHoursesParams struct {
-	OffsetParam      int32
-	LimitParam       int32
 	City             string
 	Section          string
 	MaxPrice         interface{}
+	Age              string
 	MinMainArea      interface{}
 	Shape            string
 	ExcludedTopFloor bool
@@ -167,7 +168,7 @@ type GetHoursesRow struct {
 	Address      string
 	City         sql.NullString
 	Section      sql.NullString
-	Price        int32
+	Price        string
 	CurrentFloor string
 	Floor        string
 	Shape        string
@@ -183,11 +184,10 @@ type GetHoursesRow struct {
 
 func (q *Queries) GetHourses(ctx context.Context, arg GetHoursesParams) ([]GetHoursesRow, error) {
 	rows, err := q.db.QueryContext(ctx, getHourses,
-		arg.OffsetParam,
-		arg.LimitParam,
 		arg.City,
 		arg.Section,
 		arg.MaxPrice,
+		arg.Age,
 		arg.MinMainArea,
 		arg.Shape,
 		arg.ExcludedTopFloor,
