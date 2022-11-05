@@ -18,3 +18,12 @@ pip install -r requirements.txt
 ```sh
 autopep8 --in-place --aggressive *.py --max-line-length 120
 ```
+
+```sh
+celery -A fetch worker --loglevel=info
+```
+
+```sh
+ps aux | grep firefox | awk '{print $2}' | xargs kill -9
+ps -ef | grep defunct | awk '{print $2" "$3}' | xargs kill -9
+```
