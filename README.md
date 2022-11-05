@@ -25,5 +25,5 @@ celery -A fetch worker --loglevel=info
 
 ```sh
 ps aux | grep firefox | awk '{print $2}' | xargs kill -9
-ps -ef | grep defunct | awk '{print $2" "$3}' | xargs kill -9
+ps -ef | grep -e defunct | grep -v grep | awk '{print $2" "$3}' | xargs kill -9
 ```

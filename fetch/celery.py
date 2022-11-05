@@ -8,5 +8,4 @@ app = Celery(
     include=['fetch.tasks']
 )
 
-
 app.conf.update(result_expires=3600)
