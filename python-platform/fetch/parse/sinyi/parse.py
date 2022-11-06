@@ -33,6 +33,9 @@ class Parse(Parent):
         )
         return node.find('div').text
 
+    def has_next(self) -> bool:
+        return (self.page - 1) * Settings.page_size.value < self.total_count
+
     def fetchone(self, soup: BeautifulSoup) -> Iterator[dict]:
         for element in soup.find_all(
             Settings.item.value.tag,

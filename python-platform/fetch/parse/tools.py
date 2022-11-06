@@ -1,4 +1,4 @@
 from collections import namedtuple
 
-Result = namedtuple('Result', ('Request', 'Page', 'Total'))
+Result = namedtuple('Result', ('body', 'has_next'))
 Node = namedtuple('Node', ('tag', 'class_name'))

@@ -1,8 +1,5 @@
 from selenium import webdriver
-from selenium.webdriver.firefox.service import Service
-from selenium.webdriver import FirefoxOptions
-
-from .settings import Settings
+from selenium.webdriver.chrome.options import Options
 
 
 class Instance:
@@ -14,7 +11,7 @@ class Instance:
         if Instance._instance is None:
             Instance()
         return Instance._instance
-    
+
     @staticmethod
     def reset():
         if Instance._instance is None:
@@ -25,8 +22,9 @@ class Instance:
     def __init__(self):
         if Instance._instance is not None:
             raise Exception('only one instance can exist')
-        options = FirefoxOptions()
-        options.headless = True
-        service = Service(Settings.Path.value)
-        driver = webdriver.Firefox(service=service, options=options)
-        Instance._instance = driver
+
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        Instance._instance = webdriver.Chrome(options=chrome_options)
