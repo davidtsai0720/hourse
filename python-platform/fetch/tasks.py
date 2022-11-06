@@ -38,16 +38,18 @@ def upsert_hourse(class_index: int, city_index: int, page: int):
     struct = Settings.class_mapping.value[class_index]
     obj: Parent = struct(city=city, page=page)
     delay = timedelta(seconds=Settings.delay.value)
+    now = datetime.utcnow()
+
     try:
         result = obj.exec(driver=Webdriver)
-        params = create_param(result=result)
-        now = datetime.utcnow()
-        upsert_hourse.apply_async(args=params, eta=now + delay)
-
         for body in result.body:
             upsert_rds.apply_async(args=(body,), eta=now)
 
     except Exception as e:
         logging.error(e)
 
-    return f'city:{city}\tpage:{page}\tdone'
+    finally:
+        params = create_param(result=result)
+        upsert_hourse.apply_async(args=params, eta=now + delay)
+
+    return

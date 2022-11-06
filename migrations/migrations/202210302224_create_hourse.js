@@ -2,7 +2,7 @@ exports.up = function(knex, Promise) {
     return knex.schema.createTable('hourse', table => {
             table.increments('id').primary()
             table.integer('section_id').notNullable()
-            table.string('link', 128).notNullable()
+            table.string('link', 512).notNullable()
             table.string('layout', 32)
             table.string('address', 64)
             table.decimal('price', 8, 2).notNullable()
@@ -22,6 +22,7 @@ exports.up = function(knex, Promise) {
             table.index('age')
             table.index('main_area')
             table.index('price')
+            table.index('updated_at')
         })
 };
 
