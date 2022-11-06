@@ -13,7 +13,7 @@ services:
       options:
         max-size: 50m
     ports:
-      - "80:80"
+      - 80:80
     depends_on:
       - backend
     networks:
@@ -26,8 +26,6 @@ services:
     command: go run cmd/main.go
     expose:
       - ${SERVICE_PORT}
-    ports:
-      - ${SERVICE_PORT}:${SERVICE_PORT}
     volumes:
       - ./hourse:/server
     environment:
@@ -71,7 +69,7 @@ services:
     expose:
       - ${RABBITMQ_PORT}
     ports:
-      - 15672:15672
+      - 50001:15672
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
