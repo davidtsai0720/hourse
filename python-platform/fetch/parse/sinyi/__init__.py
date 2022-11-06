@@ -1,3 +1,4 @@
-from .parse import Parse
+# -*- coding: utf-8 -*-
+from .parse import Sinyi
 
-Sinyi = Parse
+__all__ = ('Sinyi', )

@@ -10,3 +10,5 @@ gocache
 gomodcache
 postgresdata
 rabbitmqdata
+other
+crawler

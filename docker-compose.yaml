@@ -28,6 +28,8 @@ services:
       - ${SERVICE_PORT}
     volumes:
       - ./hourse:/server
+      - ./hourse/gocache:/root/.cache/go-build
+      - ./hourse/gomodcache:/go/pkg/mod
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}

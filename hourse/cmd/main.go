@@ -17,12 +17,17 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func NewDatabaseConn() (*sql.DB, error) {
+func NewDatabaseConn(ctx context.Context) (*sql.DB, error) {
 	user := os.Getenv("POSTGRES_USER")
 	password := os.Getenv("POSTGRES_PASSWORD")
 	db := os.Getenv("POSTGRES_DB")
 	port := os.Getenv("POSTGRES_PORT")
 	host := os.Getenv("POSTGRES_HOST")
+
+	loger := log.WithContext(ctx)
+	if user == "" || password == "" || db == "" || port == "" || host == "" {
+		loger.Fatalln("wrong db connecttion params")
+	}
 
 	return sql.Open("postgres", fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
@@ -30,10 +35,11 @@ func NewDatabaseConn() (*sql.DB, error) {
 }
 
 func main() {
-	loger := log.WithContext(context.Background())
+	ctx := context.Background()
+	loger := log.WithContext(ctx)
 	defer log.Close()
 
-	conn, err := NewDatabaseConn()
+	conn, err := NewDatabaseConn(ctx)
 	if err != nil {
 		loger.Fatalln(err)
 	}
@@ -56,7 +62,7 @@ func main() {
 	<-quit
 	loger.Info("Shutdown Server ...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
