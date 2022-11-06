@@ -75,7 +75,7 @@ class Parent(abc.ABC):
 
         try:
             instance.get(url=current_url)
-            logging.info(current_url)
+            logging.warning(f'current_url is {current_url}')
             WebDriverWait(instance, 10).until(method)
 
         except Exception as e:

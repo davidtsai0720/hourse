@@ -17,5 +17,3 @@ RUN mv /chromedriver/chromedriver /usr/bin/chromedriver
 WORKDIR /app
 COPY . .
 RUN pip install --upgrade pip && pip install -r requirements.txt
-
-CMD [ "celery", "-A", "fetch", "worker", "--loglevel=info" ]

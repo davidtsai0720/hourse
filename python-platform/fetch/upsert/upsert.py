@@ -14,5 +14,3 @@ def handle_upsert_hourse(data: dict) -> str:
         headers=Settings.headers.value,
     )
     assert resp.status_code == Settings.status_code.value, f'response: {resp.json()}, body: {data}'
-    link = data['link']
-    return f'upsert {link} successfully'
