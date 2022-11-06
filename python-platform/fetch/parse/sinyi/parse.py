@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from collections.abc import Iterator
 import json
 
@@ -9,7 +10,7 @@ from fetch.parse.parents import Parent
 from .settings import Settings
 
 
-class Parse(Parent):
+class Sinyi(Parent):
 
     def get_method(self):
         return expected_conditions.presence_of_element_located((

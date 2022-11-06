@@ -1,4 +1,4 @@
-from typing import Union
+# -*- coding: utf-8 -*-
 from collections.abc import Iterator
 from decimal import Decimal
 import abc
