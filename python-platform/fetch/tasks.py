@@ -42,7 +42,7 @@ def upsert_hourse(class_index: int, city_index: int, page: int):
         result = obj.exec(driver=Webdriver)
         params: create_param(result=result)
         now = datetime.utcnow()
-        # upsert_hourse.apply_async(args=params, eta=now + delay)
+        upsert_hourse.apply_async(args=params, eta=now + delay)
 
         for body in result.body:
             upsert_rds.apply_async(args=(body,), eta=now)
