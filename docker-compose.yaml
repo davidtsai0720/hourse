@@ -4,20 +4,24 @@ services:
 
   frontend:
     image: nginx:1.23.2-alpine
-    container_name: frontend
+    container_name: hourse-frontend
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
       - ./html:/var/www/html
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
     ports:
       - "80:80"
     depends_on:
-      - restful
-    networks:
       - backend
+    networks:
+      - hourse
 
-  restful:
+  backend:
     image: golang:1.18-alpine
-    container_name: restful
+    container_name: hourse-backend
     working_dir: /server
     command: go run cmd/main.go
     expose:
@@ -33,14 +37,18 @@ services:
       - POSTGRES_PORT=${POSTGRES_PORT}
       - POSTGRES_HOST=database
       - SERVICE_PORT=${SERVICE_PORT}
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
     depends_on:
       - database
     networks:
-      - backend
+      - hourse
 
   database:
     image: postgres:15.0-alpine
-    container_name: postgres
+    container_name: hourse-postgres
     volumes:
       - ./postgresdata:/var/lib/postgresql/data
     expose:
@@ -49,9 +57,56 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
     networks:
+      - hourse
+
+  rabbitmq:
+    image: rabbitmq:3.11.2-management-alpine
+    container_name: hourse-rabbitmq
+    restart: always
+    expose:
+      - ${RABBITMQ_PORT}
+    ports:
+      - 15672:15672
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST}
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+    volumes:
+      - ./rabbitmqdata:/var/lib/rabbitmq
+    networks:
+      - hourse
+
+  consumer:
+    build:
+      context: python-platform
+      dockerfile: fetch/build/dockerfile
+    container_name: hourse-consumer
+    image: hourse-consumer
+    environment:
+      - BROKER=pyamqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq/${RABBITMQ_DEFAULT_VHOST}
+      - SERVICE_PORT=${SERVICE_PORT}
+      - SERVICE_HOST=backend
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+    volumes:
+      - ./python-platform:/app
+    depends_on:
+      - rabbitmq
       - backend
+    networks:
+      - hourse
 
 networks:
-  backend:
+  hourse:
     driver: bridge

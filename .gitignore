@@ -9,3 +9,4 @@ config
 gocache
 gomodcache
 postgresdata
+rabbitmqdata
