@@ -40,7 +40,7 @@ def upsert_hourse(class_index: int, city_index: int, page: int):
     delay = timedelta(seconds=Settings.delay.value)
     try:
         result = obj.exec(driver=Webdriver)
-        params: create_param(result=result)
+        params = create_param(result=result)
         now = datetime.utcnow()
         upsert_hourse.apply_async(args=params, eta=now + delay)
 
