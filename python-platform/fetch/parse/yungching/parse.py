@@ -12,6 +12,10 @@ from .settings import Settings
 
 class YungChing(Parent):
 
+    def __init__(self, city: str, page: int) -> None:
+        super().__init__(city, page)
+        self._city = self.settings.city_mapping.value[city]
+
     def get_method(self):
         return expected_conditions.presence_of_element_located((
             By.CLASS_NAME,
