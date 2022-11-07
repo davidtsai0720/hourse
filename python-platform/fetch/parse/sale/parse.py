@@ -64,7 +64,7 @@ class Sale(Parent):
             result['section'] = result['section'].replace('-', '')
             result['raw'] = json.dumps(result)
             result['link'] = Settings.URL.value + result['link']
-            result['city'] = self.city
+            result['city'] = self.settings.city_mapping.value[self.city]
 
             if result['main_area']:
                 result['main_area'] = self.to_decimal(result['main_area'])
