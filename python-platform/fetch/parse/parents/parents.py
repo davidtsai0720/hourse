@@ -46,7 +46,7 @@ class Parent(abc.ABC):
     def get_total_count(self, soup: BeautifulSoup) -> int:
         pass
 
-    def set_total_count(self, soup: BeautifulSoup) -> int:
+    def set_total_count(self, soup: BeautifulSoup):
         self._total_count = self.to_decimal(self.get_total_count(soup))
 
     @property
@@ -73,15 +73,9 @@ class Parent(abc.ABC):
         current_url = self.get_current_url()
         instance = driver.get_instance()
 
-        try:
-            instance.get(url=current_url)
-            logging.warning(f'current_url is {current_url}')
-            WebDriverWait(instance, 10).until(method)
-
-        except Exception as e:
-            driver.reset()
-            assert False, e
-
+        instance.get(url=current_url)
+        logging.warning(f'current_url is {current_url}')
+        WebDriverWait(instance, 10).until(method)
         soup = BeautifulSoup(instance.page_source, 'html.parser')
         request = self.fetchone(soup=soup)
         self.set_total_count(soup=soup)

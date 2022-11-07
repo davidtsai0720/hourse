@@ -12,6 +12,10 @@ from .settings import Settings
 
 class YungChing(Parent):
 
+    def __init__(self, city: str, page: int) -> None:
+        super().__init__(city, page)
+        self._city = self.settings.city_mapping.value[city]
+
     def get_method(self):
         return expected_conditions.presence_of_element_located((
             By.CLASS_NAME,
@@ -24,7 +28,7 @@ class YungChing(Parent):
             f'{self.city}-_c',
             f'{self.settings.min_price.value}-{self.settings.max_price.value}_price',
             f'{self.settings.min_area.value}-_pinby',
-            f'pg={self.page}'
+            f'?pg={self.page}'
         ))
 
     def get_total_count(self, soup: BeautifulSoup) -> int:
@@ -35,7 +39,7 @@ class YungChing(Parent):
         return node.text
 
     def has_next(self) -> bool:
-        return (self.page - 1) * Settings.page_size.value < self.total_count
+        return self.page * Settings.page_size.value < self.total_count
 
     def fetchone(self, soup: BeautifulSoup) -> Iterator[dict]:
         for element in soup.find_all(

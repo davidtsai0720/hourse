@@ -35,7 +35,7 @@ class Sinyi(Parent):
         return node.find('div').text
 
     def has_next(self) -> bool:
-        return (self.page - 1) * Settings.page_size.value < self.total_count
+        return self.page * Settings.page_size.value < self.total_count
 
     def fetchone(self, soup: BeautifulSoup) -> Iterator[dict]:
         for element in soup.find_all(
@@ -43,6 +43,9 @@ class Sinyi(Parent):
             class_=Settings.item.value.class_name,
         ):
             link = element.find('a')
+            if Settings.URL.value in link['href']:
+                continue
+
             link = Settings.URL.value + link['href']
             result = {'link': link}
 
