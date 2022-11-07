@@ -37,6 +37,7 @@ def upsert_hourse(class_index: int, city_index: int, page: int):
 
     city = Settings.cities.value[city_index]
     struct = Settings.class_mapping.value[class_index]
+
     obj: Parent = struct(city=city, page=page)
     delay_second = random.uniform(Settings.min_delay_second.value, Settings.max_delay_second.value)
     delay = timedelta(seconds=delay_second)

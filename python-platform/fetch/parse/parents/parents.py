@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from collections.abc import Iterator
 from decimal import Decimal
+from typing import List
 import abc
 import logging
 
@@ -13,6 +14,12 @@ from .settings import Settings
 
 
 class Parent(abc.ABC):
+
+    class_group = []
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.class_group.append(cls)
 
     def __init__(self, city: str, page: int) -> None:
         self._city = city
