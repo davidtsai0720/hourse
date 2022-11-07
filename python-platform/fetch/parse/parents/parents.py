@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from collections.abc import Iterator
 from decimal import Decimal
-from typing import Union
 import abc
 import logging
 
@@ -74,15 +73,9 @@ class Parent(abc.ABC):
         current_url = self.get_current_url()
         instance = driver.get_instance()
 
-        try:
-            instance.get(url=current_url)
-            logging.warning(f'current_url is {current_url}')
-            WebDriverWait(instance, 10).until(method)
-
-        except Exception as e:
-            driver.reset()
-            assert False, e
-
+        instance.get(url=current_url)
+        logging.warning(f'current_url is {current_url}')
+        WebDriverWait(instance, 10).until(method)
         soup = BeautifulSoup(instance.page_source, 'html.parser')
         request = self.fetchone(soup=soup)
         self.set_total_count(soup=soup)

@@ -37,7 +37,7 @@ class Sale(Parent):
         return node.text
 
     def has_next(self) -> bool:
-        return (self.page - 1) * Settings.page_size.value < self.total_count
+        return self.page * Settings.page_size.value < self.total_count
 
     def fetchone(self, soup: BeautifulSoup) -> Iterator[dict]:
         for input in soup.find_all(

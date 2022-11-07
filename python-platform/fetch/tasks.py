@@ -41,17 +41,15 @@ def upsert_hourse(class_index: int, city_index: int, page: int):
     delay_second = random.uniform(Settings.min_delay_second.value, Settings.max_delay_second.value)
     delay = timedelta(seconds=delay_second)
     now = datetime.utcnow()
-
     try:
         result = obj.exec(driver=Webdriver)
         for body in result.body:
             upsert_rds.apply_async(args=(body,), eta=now)
 
-    except Exception as e:
-        logging.error(e)
-
-    finally:
         params = create_param(result=result)
         upsert_hourse.apply_async(args=params, eta=now + delay)
+
+    except Exception as e:
+        logging.error(e)
 
     return
