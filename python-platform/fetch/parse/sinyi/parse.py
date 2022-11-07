@@ -43,6 +43,9 @@ class Sinyi(Parent):
             class_=Settings.item.value.class_name,
         ):
             link = element.find('a')
+            if Settings.URL.value in link['href']:
+                continue
+
             link = Settings.URL.value + link['href']
             result = {'link': link}
 

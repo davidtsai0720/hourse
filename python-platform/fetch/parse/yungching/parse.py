@@ -28,7 +28,7 @@ class YungChing(Parent):
             f'{self.city}-_c',
             f'{self.settings.min_price.value}-{self.settings.max_price.value}_price',
             f'{self.settings.min_area.value}-_pinby',
-            f'pg={self.page}'
+            f'?pg={self.page}'
         ))
 
     def get_total_count(self, soup: BeautifulSoup) -> int:

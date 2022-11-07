@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from collections.abc import Iterator
 from decimal import Decimal
+from typing import Union
 import abc
 import logging
 
@@ -46,7 +47,7 @@ class Parent(abc.ABC):
     def get_total_count(self, soup: BeautifulSoup) -> int:
         pass
 
-    def set_total_count(self, soup: BeautifulSoup) -> int:
+    def set_total_count(self, soup: BeautifulSoup):
         self._total_count = self.to_decimal(self.get_total_count(soup))
 
     @property
