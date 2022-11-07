@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from collections.abc import Iterator
 from decimal import Decimal
-from typing import List
 import abc
 import logging
 
@@ -73,7 +72,7 @@ class Parent(abc.ABC):
         for char in text:
             if char.isdigit() or char == '.':
                 count += char
-        return Decimal(count)
+        return Decimal(count) if count != '' else Decimal(0)
 
     def exec(self, driver: Instance) -> Result:
         method = self.get_method()
