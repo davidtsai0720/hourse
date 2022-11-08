@@ -61,6 +61,8 @@ class Sinyi(Parent):
                 Settings.hourse_info.value.tag,
                 class_=Settings.hourse_info.value.class_name,
             )
+            if len(hourse_info.find_all('span')) != 4:
+                continue
             result.update(zip(
                 ('area', 'main_area', 'layout', 'floor'),
                 (data.text.strip() for data in hourse_info.find_all('span'))))
