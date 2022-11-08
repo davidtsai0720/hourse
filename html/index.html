@@ -12,15 +12,14 @@
         <th>屋齡</th><th>室內坪數</th><th>總坪數</th>
         <th>Layout</th><th>地區</th><th>連結</th><th>註解</th></tr>`
     const URL = 'http://192.168.252.128/api'
+    const Header = {'Content-Type': 'application/json'}
     const handleSection = () => {
         const city = document.getElementById('city')
         const section = document.getElementById('section')
         const value = city.options[city.selectedIndex].value
         fetch(`${URL}/section/${value}`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: Header,
         })
         .then(resp => resp.json())
         .then(results => {
@@ -99,9 +98,7 @@
 
         fetch(`${URL}/hourse?${query.join('&')}`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: Header,
         })
         .then(resp => resp.json())
         .then(result => handleTalbe(result))
@@ -110,20 +107,9 @@
     window.onload = () => {
         
         const city = document.getElementById('city')
-        // fetch(`${URL}/hourse`, {
-        //     method: 'GET',
-        //     headers: {
-        //         'Content-Type': 'application/json',
-        //     },
-        // })
-        // .then((resp) => resp.json())
-        // .then((results) => handleTalbe(results))
-
         fetch(`${URL}/city`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: Header,
         })
         .then((resp) => resp.json())
         .then(results => {

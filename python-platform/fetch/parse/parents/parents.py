@@ -14,6 +14,12 @@ from .settings import Settings
 
 class Parent(abc.ABC):
 
+    class_group = []
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.class_group.append(cls)
+
     def __init__(self, city: str, page: int) -> None:
         self._city = city
         self._page = page
@@ -66,7 +72,7 @@ class Parent(abc.ABC):
         for char in text:
             if char.isdigit() or char == '.':
                 count += char
-        return Decimal(count)
+        return Decimal(count) if count != '' else Decimal(0)
 
     def exec(self, driver: Instance) -> Result:
         method = self.get_method()
