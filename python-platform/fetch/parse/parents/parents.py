@@ -5,6 +5,7 @@ import abc
 import logging
 
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.chromium.webdriver import ChromiumDriver
 from bs4 import BeautifulSoup
 
 from fetch.webdriver import Instance
@@ -21,6 +22,8 @@ class Parent(abc.ABC):
         cls.class_group.append(cls)
 
     def __init__(self, city: str, page: int) -> None:
+        assert isinstance(city, str), 'Should be str'
+        assert isinstance(page, int), 'Should be int'
         self._city = city
         self._page = page
 
@@ -53,6 +56,7 @@ class Parent(abc.ABC):
         pass
 
     def set_total_count(self, soup: BeautifulSoup):
+        assert isinstance(soup, BeautifulSoup), 'Should be BeautifulSoup'
         self._total_count = self.to_decimal(self.get_total_count(soup))
 
     @property
@@ -74,10 +78,10 @@ class Parent(abc.ABC):
                 count += char
         return Decimal(count) if count != '' else Decimal(0)
 
-    def exec(self, driver: Instance) -> Result:
+    def exec(self, instance: Instance) -> Result:
+        assert isinstance(instance, ChromiumDriver), 'Should be ChromiumDriver'
         method = self.get_method()
         current_url = self.get_current_url()
-        instance = driver.get_instance()
 
         instance.get(url=current_url)
         logging.warning(f'current_url is {current_url}')
