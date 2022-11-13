@@ -71,6 +71,8 @@ class YungChing(Parent):
                 Settings.detail.value.tag,
                 class_=Settings.detail.value.class_name,
             )
+            if len(detail.find_all('li')) != len(Settings.fields.value):
+                continue
 
             result.update(zip(
                 Settings.fields.value,

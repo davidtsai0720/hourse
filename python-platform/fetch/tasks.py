@@ -4,6 +4,8 @@ from typing import Tuple
 import logging
 import random
 
+from selenium.webdriver.chromium.webdriver import ChromiumDriver
+
 from .celery import app
 from .upsert import handle_upsert_hourse
 from .parse import Parent, Result
@@ -24,6 +26,8 @@ def upsert_rds(body: dict) -> str:
 def upsert_hourse(class_index: int, city_index: int, page: int):
 
     def create_param(result: Result) -> Tuple[int]:
+        assert isinstance(result, Result), 'Should be Result'
+
         if result.has_next:
             return (class_index, city_index, page + 1)
 
@@ -37,13 +41,17 @@ def upsert_hourse(class_index: int, city_index: int, page: int):
 
     city = Settings.cities.value[city_index]
     struct = Settings.class_mapping.value[class_index]
-
-    obj: Parent = struct(city=city, page=page)
     delay_second = random.uniform(Settings.min_delay_second.value, Settings.max_delay_second.value)
     delay = timedelta(seconds=delay_second)
     now = datetime.utcnow()
     try:
-        result = obj.exec(driver=Webdriver)
+        instance = Webdriver.get_instance()
+        assert isinstance(instance, ChromiumDriver), 'Should be ChromiumlsDriver'
+
+        obj = struct(city=city, page=page)
+        assert isinstance(obj, Parent), 'Should be Parent'
+
+        result = obj.exec(instance=instance)
         for body in result.body:
             upsert_rds.apply_async(args=(body,), eta=now)
 
@@ -51,6 +59,10 @@ def upsert_hourse(class_index: int, city_index: int, page: int):
         upsert_hourse.apply_async(args=params, eta=now + delay)
 
     except Exception as e:
+        Webdriver.reset()
         logging.error(e)
+
+        params = create_param(result=Result(body=tuple(), has_next=False))
+        upsert_hourse.apply_async(args=params, eta=now + delay)
 
     return

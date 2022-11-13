@@ -91,7 +91,7 @@ services:
       dockerfile: fetch/build/dockerfile
     container_name: hourse-consumer
     image: hourse-consumer
-    command: celery -A fetch worker -l WARNING
+    command: celery -A fetch worker -l WARNING --concurrency 1
     environment:
       - BROKER=pyamqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq/${RABBITMQ_DEFAULT_VHOST}
       - SERVICE_PORT=${SERVICE_PORT}
