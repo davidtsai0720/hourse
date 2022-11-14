@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime, timedelta
 from typing import Tuple
+import os
 import logging
 import random
 
@@ -61,8 +62,6 @@ def upsert_hourse(class_index: int, city_index: int, page: int):
     except Exception as e:
         Webdriver.reset()
         logging.error(e)
-
-        params = create_param(result=Result(body=tuple(), has_next=False))
-        upsert_hourse.apply_async(args=params, eta=now + delay)
+        os.exit(1)
 
     return
