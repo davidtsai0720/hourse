@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime, timedelta
 from typing import Tuple
-import os
 import logging
 import random
 
@@ -27,7 +26,8 @@ def upsert_rds(body: dict) -> str:
 def upsert_hourse(class_index: int, city_index: int, page: int):
 
     def create_param(result: Result) -> Tuple[int]:
-        assert isinstance(result, Result), 'Should be Result'
+        if not isinstance(result, Result):
+            raise TypeError("Should be Result")
 
         if result.has_next:
             return (class_index, city_index, page + 1)
@@ -47,10 +47,12 @@ def upsert_hourse(class_index: int, city_index: int, page: int):
     now = datetime.utcnow()
     try:
         instance = Webdriver.get_instance()
-        assert isinstance(instance, ChromiumDriver), 'Should be ChromiumlsDriver'
+        if not isinstance(instance, ChromiumDriver):
+            raise TypeError("Should be ChromiumlsDriver")
 
         obj = struct(city=city, page=page)
-        assert isinstance(obj, Parent), 'Should be Parent'
+        if not isinstance(obj, Parent):
+            raise TypeError("Should be Parent")
 
         result = obj.exec(instance=instance)
         for body in result.body:
@@ -59,9 +61,14 @@ def upsert_hourse(class_index: int, city_index: int, page: int):
         params = create_param(result=result)
         upsert_hourse.apply_async(args=params, eta=now + delay)
 
+        if random.randint(0, 100) <= 10:
+            Webdriver.close()
+
     except Exception as e:
         Webdriver.reset()
         logging.error(e)
-        os.exit(1)
+
+        params = create_param(result=Result(body=[], has_next=False))
+        upsert_hourse.apply_async(args=params, eta=now + timedelta(seconds=600))
 
     return

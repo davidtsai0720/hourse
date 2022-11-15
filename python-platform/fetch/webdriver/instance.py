@@ -18,17 +18,31 @@ class Instance:
     def reset():
         if Instance._instance is None:
             return
-        Instance._instance.close()
         Instance._instance.quit()
+
+    @staticmethod
+    def close():
+        if Instance._instance is None:
+            return
+
+        page_size = len(Instance._instance.window_handles)
+        if page_size <= 1:
+            return
+
+        while page_size > 1:
+            Instance._instance.switch_to.window(Instance._instance.window_handles[0])
+            Instance._instance.close()
+            page_size -= 1
+
+        Instance._instance.switch_to.window(Instance._instance.window_handles[0])
 
     def __init__(self):
         if Instance._instance is not None:
-            raise Exception('only one instance can exist')
+            raise ValueError("only one instance can exist")
 
         chrome_options = Options()
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument('--window-size=1920,1080')
+        chrome_options.add_argument("--window-size=1920,1080")
         Instance._instance = webdriver.Chrome(options=chrome_options)
-        assert isinstance(Instance._instance, ChromiumDriver), 'Should be ChromiumDriver'
