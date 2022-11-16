@@ -12,53 +12,6 @@ import (
 	"time"
 )
 
-const createHourse = `-- name: CreateHourse :exec
-
-INSERT INTO hourse (
-    section_id, link, layout, address, price, current_floor, total_floor,
-    shape, age, area, main_area, raw)
-VALUES (
-    $1, $2, $3, $4, $5, $6,
-    $7, $8, $9, $10, $11, $12)
-ON CONFLICT (link)
-DO UPDATE
-SET updated_at = CURRENT_TIMESTAMP, price = EXCLUDED.price
-`
-
-type CreateHourseParams struct {
-	SectionID    int32
-	Link         string
-	Layout       sql.NullString
-	Address      sql.NullString
-	Price        string
-	CurrentFloor string
-	TotalFloor   string
-	Shape        string
-	Age          string
-	Area         string
-	MainArea     sql.NullString
-	Raw          json.RawMessage
-}
-
-// OFFSET @offset_param :: INTEGER LIMIT @limit_param :: INTEGER;
-func (q *Queries) CreateHourse(ctx context.Context, arg CreateHourseParams) error {
-	_, err := q.db.ExecContext(ctx, createHourse,
-		arg.SectionID,
-		arg.Link,
-		arg.Layout,
-		arg.Address,
-		arg.Price,
-		arg.CurrentFloor,
-		arg.TotalFloor,
-		arg.Shape,
-		arg.Age,
-		arg.Area,
-		arg.MainArea,
-		arg.Raw,
-	)
-	return err
-}
-
 const getCities = `-- name: GetCities :many
 SELECT name FROM city
 `
@@ -337,4 +290,51 @@ func (q *Queries) GetSectionsWithCity(ctx context.Context) ([]GetSectionsWithCit
 		return nil, err
 	}
 	return items, nil
+}
+
+const upsertHourse = `-- name: UpsertHourse :exec
+
+INSERT INTO hourse (
+    section_id, link, layout, address, price, current_floor, total_floor,
+    shape, age, area, main_area, raw)
+VALUES (
+    $1, $2, $3, $4, $5, $6,
+    $7, $8, $9, $10, $11, $12)
+ON CONFLICT (link)
+DO UPDATE
+SET updated_at = CURRENT_TIMESTAMP, price = EXCLUDED.price
+`
+
+type UpsertHourseParams struct {
+	SectionID    int32
+	Link         string
+	Layout       sql.NullString
+	Address      sql.NullString
+	Price        string
+	CurrentFloor string
+	TotalFloor   string
+	Shape        string
+	Age          string
+	Area         string
+	MainArea     sql.NullString
+	Raw          json.RawMessage
+}
+
+// OFFSET @offset_param :: INTEGER LIMIT @limit_param :: INTEGER;
+func (q *Queries) UpsertHourse(ctx context.Context, arg UpsertHourseParams) error {
+	_, err := q.db.ExecContext(ctx, upsertHourse,
+		arg.SectionID,
+		arg.Link,
+		arg.Layout,
+		arg.Address,
+		arg.Price,
+		arg.CurrentFloor,
+		arg.TotalFloor,
+		arg.Shape,
+		arg.Age,
+		arg.Area,
+		arg.MainArea,
+		arg.Raw,
+	)
+	return err
 }

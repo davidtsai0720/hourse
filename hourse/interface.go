@@ -50,7 +50,7 @@ type GetHourseResponse struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-type CreateHourseRequest struct {
+type UpsertHourseRequest struct {
 	City     string `json:"city" validate:"required"`
 	Section  string `json:"section" validate:"required"`
 	Link     string `json:"link" validate:"required"`
@@ -70,7 +70,7 @@ type HourseService interface {
 	GetCities(ctx context.Context) (*GetCitiesResponse, error)
 	GetSectionsByCity(ctx context.Context, name string) (*GetSectionsByNameResponse, error)
 	GetSectionsWithCity(ctx context.Context) ([]GetSectionsWithCity, error)
-	CreateHourse(ctx context.Context, in *CreateHourseRequest) error
+	UpsertHourse(ctx context.Context, in *UpsertHourseRequest) error
 }
 
 type RDS interface {
@@ -78,6 +78,6 @@ type RDS interface {
 	GetHourses(ctx context.Context, arg postgres.GetHoursesParams) ([]postgres.GetHoursesRow, error)
 	GetSectionsByCity(ctx context.Context, cityName string) ([]string, error)
 	GetSectionsWithCity(ctx context.Context) ([]postgres.GetSectionsWithCityRow, error)
-	CreateHourse(ctx context.Context, arg postgres.CreateHourseParams) error
+	UpsertHourse(ctx context.Context, arg postgres.UpsertHourseParams) error
 	GetSection(ctx context.Context, arg postgres.GetSectionParams) (postgres.GetSectionRow, error)
 }

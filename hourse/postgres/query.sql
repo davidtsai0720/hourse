@@ -89,7 +89,7 @@ LEFT JOIN city ON (city.id=section.city_id)
 ORDER BY hourse.age, hourse.price, hourse.main_area;
 -- OFFSET @offset_param :: INTEGER LIMIT @limit_param :: INTEGER;
 
--- name: CreateHourse :exec
+-- name: UpsertHourse :exec
 INSERT INTO hourse (
     section_id, link, layout, address, price, current_floor, total_floor,
     shape, age, area, main_area, raw)

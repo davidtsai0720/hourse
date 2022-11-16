@@ -35,7 +35,7 @@ func (server *Server) Handler() http.Handler {
 		r.Get("/section/{name}", server.HandleGetSectionsByCity())
 		r.Get("/sections", server.HandleGetSectionsWithCity())
 		r.Get("/hourse", server.HandleGetHourses())
-		r.Post("/hourse", server.HandleCreateHourse())
+		r.Put("/hourse", server.HandleUpsertHourse())
 	})
 	return server.router
 }

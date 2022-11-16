@@ -9,7 +9,7 @@ from .tools import DecimalEncoder
 
 def handle_upsert_hourse(data: dict) -> str:
     body = json.dumps(data, cls=DecimalEncoder, ensure_ascii=False).encode("utf-8")
-    resp = requests.post(
+    resp = requests.put(
         url=Settings.URL.value, data=body,
         headers=Settings.headers.value,
     )

@@ -21,17 +21,17 @@ type Service struct {
 	validator *validator.Validate
 }
 
-func convertToCreateHourseParams(
-	in *CreateHourseRequest,
+func convertToUpsertHourseParams(
+	in *UpsertHourseRequest,
 	section postgres.GetSectionRow,
-) (postgres.CreateHourseParams, error) {
+) (postgres.UpsertHourseParams, error) {
 
 	floors := strings.Split(in.Floor, "/")
 	if len(floors) != 2 {
-		return postgres.CreateHourseParams{}, fmt.Errorf("invalid floor")
+		return postgres.UpsertHourseParams{}, fmt.Errorf("invalid floor")
 	}
 
-	output := postgres.CreateHourseParams{
+	output := postgres.UpsertHourseParams{
 		SectionID:    int32(section.ID),
 		Link:         in.Link,
 		Layout:       sql.NullString{String: in.Layout, Valid: in.Layout != ""},
@@ -48,7 +48,7 @@ func convertToCreateHourseParams(
 	return output, nil
 }
 
-func (service *Service) CreateHourse(ctx context.Context, in *CreateHourseRequest) error {
+func (service *Service) UpsertHourse(ctx context.Context, in *UpsertHourseRequest) error {
 	logger := log.WithContext(ctx)
 
 	if err := service.validator.Struct(in); err != nil {
@@ -65,13 +65,13 @@ func (service *Service) CreateHourse(ctx context.Context, in *CreateHourseReques
 		return err
 	}
 
-	request, err := convertToCreateHourseParams(in, section)
+	request, err := convertToUpsertHourseParams(in, section)
 	if err != nil {
 		logger.Errorf("failed to convert create hourse params: %v", err)
 		return err
 	}
 
-	if err := service.rds.CreateHourse(ctx, request); err != nil {
+	if err := service.rds.UpsertHourse(ctx, request); err != nil {
 		logger.Errorf("failed to create hourse: %v", err)
 		return err
 	}
