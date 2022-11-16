@@ -20,13 +20,13 @@ class Sale(Parent):
 
     def get_current_url(self) -> str:
         return URL.build(host=Settings.URL.value, params={
-            'shType': 'list',
-            'regionid': Settings.city_mappint.value.get(self.city, ''),
-            'kind': 9,
-            'price': f'{self.settings.min_price.value}$_{self.settings.max_price.value}$',
-            'area': f'{self.settings.min_area.value}$_$',
-            'firstRow': self.page * Settings.page_size.value,
-            'totalRows': 0,
+            "shType": "list",
+            "regionid": Settings.city_mappint.value.get(self.city, ""),
+            "kind": 9,
+            "price": f"{self.settings.min_price.value}$_{self.settings.max_price.value}$",
+            "area": f"{self.settings.min_area.value}$_$",
+            "firstRow": self.page * Settings.page_size.value,
+            "totalRows": 0,
         })
 
     def get_total_count(self, soup: BeautifulSoup) -> int:
@@ -50,29 +50,29 @@ class Sale(Parent):
             )
 
             result = {
-                'title': titleNode.text.strip(),
-                'link': titleNode.a['href'],
+                "title": titleNode.text.strip(),
+                "link": titleNode.a["href"],
             }
 
-            if 'newhouse' in result['link']:
+            if "newhouse" in result["link"]:
                 continue
 
             for key, node in Settings.fields.value.items():
                 item = input.find(node.tag, class_=node.class_name)
-                result[key] = '' if item is None else item.text.strip()
+                result[key] = "" if item is None else item.text.strip()
 
-            result['section'] = result['section'].replace('-', '')
-            result['raw'] = json.dumps(result)
-            result['link'] = Settings.URL.value + result['link']
-            result['city'] = self.settings.city_mapping.value[self.city]
+            result["section"] = result["section"].replace("-", "")
+            result["raw"] = json.dumps(result)
+            result["link"] = Settings.URL.value + result["link"]
+            result["city"] = self.settings.city_mapping.value[self.city]
 
-            if result['main_area']:
-                result['main_area'] = self.to_decimal(result['main_area'])
+            if result["main_area"]:
+                result["main_area"] = self.to_decimal(result["main_area"])
 
-            if result['area']:
-                result['area'] = self.to_decimal(result['area'])
+            if result["area"]:
+                result["area"] = self.to_decimal(result["area"])
 
-            if result['price']:
-                result['price'] = self.to_decimal(result['price'].split('  ')[-1])
+            if result["price"]:
+                result["price"] = self.to_decimal(result["price"].split("  ")[-1])
 
             yield result

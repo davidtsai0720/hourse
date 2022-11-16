@@ -3,4 +3,4 @@ from .instance import Instance
 
 Webdriver = Instance
 
-__all__ = ('Webdriver', )
+__all__ = ("Webdriver", )

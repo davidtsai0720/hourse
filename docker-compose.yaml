@@ -102,6 +102,7 @@ services:
         max-size: 50m
     volumes:
       - ./python-platform:/app
+    restart: always
     depends_on:
       - rabbitmq
       - backend

@@ -22,8 +22,12 @@ class Parent(abc.ABC):
         cls.class_group.append(cls)
 
     def __init__(self, city: str, page: int) -> None:
-        assert isinstance(city, str), 'Should be str'
-        assert isinstance(page, int), 'Should be int'
+        if not isinstance(city, str):
+            raise TypeError("City should be str")
+
+        if not isinstance(page, int):
+            raise TypeError("Page should be int")
+
         self._city = city
         self._page = page
 
@@ -56,7 +60,8 @@ class Parent(abc.ABC):
         pass
 
     def set_total_count(self, soup: BeautifulSoup):
-        assert isinstance(soup, BeautifulSoup), 'Should be BeautifulSoup'
+        if not isinstance(soup, BeautifulSoup):
+            raise TypeError("Should be BeautifulSoup")
         self._total_count = self.to_decimal(self.get_total_count(soup))
 
     @property
@@ -72,21 +77,22 @@ class Parent(abc.ABC):
         pass
 
     def to_decimal(self, text: str) -> Decimal:
-        count = ''
+        count = ""
         for char in text:
-            if char.isdigit() or char == '.':
+            if char.isdigit() or char == ".":
                 count += char
-        return Decimal(count) if count != '' else Decimal(0)
+        return Decimal(count) if count != "" else Decimal(0)
 
     def exec(self, instance: Instance) -> Result:
-        assert isinstance(instance, ChromiumDriver), 'Should be ChromiumDriver'
+        if not isinstance(instance, ChromiumDriver):
+            raise TypeError("Should be ChromiumDriver")
         method = self.get_method()
         current_url = self.get_current_url()
 
         instance.get(url=current_url)
-        logging.warning(f'current_url is {current_url}')
+        logging.warning(f"current_url is {current_url}")
         WebDriverWait(instance, 10).until(method)
-        soup = BeautifulSoup(instance.page_source, 'html.parser')
+        soup = BeautifulSoup(instance.page_source, "html.parser")
         request = self.fetchone(soup=soup)
         self.set_total_count(soup=soup)
         return Result(body=request, has_next=self.has_next())

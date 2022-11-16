@@ -92,15 +92,15 @@ func (server *Server) HandleGetSectionsWithCity() http.HandlerFunc {
 	}
 }
 
-func (server *Server) HandleCreateHourse() http.HandlerFunc {
+func (server *Server) HandleUpsertHourse() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		body := new(hourse.CreateHourseRequest)
+		body := new(hourse.UpsertHourseRequest)
 		if err := json.NewDecoder(r.Body).Decode(body); err != nil {
 			responseError(w, err, http.StatusBadRequest)
 			return
 		}
 
-		if err := server.service.CreateHourse(r.Context(), body); err != nil {
+		if err := server.service.UpsertHourse(r.Context(), body); err != nil {
 			responseError(w, err, http.StatusInternalServerError)
 			return
 		}
