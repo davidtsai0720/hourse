@@ -6,8 +6,8 @@ services:
     image: nginx:1.23.2-alpine
     container_name: hourse-frontend
     volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-      - ./html:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./html:/var/www/html:ro
     logging:
       driver: json-file
       options:
@@ -23,13 +23,13 @@ services:
     image: golang:1.18-alpine
     container_name: hourse-backend
     working_dir: /server
-    command: go run cmd/main.go
+    command: sh -c "go build -o app cmd/main.go && ./app"
     expose:
       - ${SERVICE_PORT}
     volumes:
-      - ./hourse:/server
-      - ./hourse/gocache:/root/.cache/go-build
-      - ./hourse/gomodcache:/go/pkg/mod
+      - ./hourse:/server:rw
+      - ./hourse/gocache:/root/.cache/go-build:rw
+      - ./hourse/gomodcache:/go/pkg/mod:rw
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
@@ -50,7 +50,7 @@ services:
     image: postgres:15.0-alpine
     container_name: hourse-postgres
     volumes:
-      - ./postgresdata:/var/lib/postgresql/data
+      - ./postgresdata:/var/lib/postgresql/data:rw
     expose:
       - ${POSTGRES_PORT}
     environment:
@@ -81,7 +81,7 @@ services:
       options:
         max-size: 50m
     volumes:
-      - ./rabbitmqdata:/var/lib/rabbitmq
+      - ./rabbitmqdata:/var/lib/rabbitmq:rw
     networks:
       - hourse
 
@@ -101,7 +101,7 @@ services:
       options:
         max-size: 50m
     volumes:
-      - ./python-platform:/app
+      - ./python-platform:/app:ro
     restart: always
     depends_on:
       - rabbitmq

@@ -32,11 +32,11 @@ def upsert_hourse(class_index: int, city_index: int, page: int):
         if result.has_next:
             return (class_index, city_index, page + 1)
 
-        if city_index + 1 < len(Settings.cities.value):
-            return (class_index, city_index + 1, 1)
-
         if class_index + 1 < len(Settings.class_mapping.value):
-            return (class_index + 1, 0, 1)
+            return (class_index + 1, city_index, 1)
+
+        if city_index + 1 < len(Settings.cities.value):
+            return (0, city_index + 1, 1)
 
         return (0, 0, 1)
 
@@ -61,14 +61,13 @@ def upsert_hourse(class_index: int, city_index: int, page: int):
         params = create_param(result=result)
         upsert_hourse.apply_async(args=params, eta=now + delay)
 
-        if random.randint(0, 100) <= 10:
-            Webdriver.close()
+        Webdriver.close()
 
     except Exception as e:
         Webdriver.reset()
         logging.error(e)
 
         params = create_param(result=Result(body=[], has_next=False))
-        upsert_hourse.apply_async(args=params, eta=now + timedelta(seconds=600))
+        upsert_hourse.apply_async(args=params, eta=now + timedelta(seconds=3600))
 
     return
